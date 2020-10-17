@@ -1,38 +1,67 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QWidget,
+    QLabel,
+    QAbstractButton,
+    QHBoxLayout,
+)
+from PyQt5.QtGui import QPixmap, QPainter
 from PyQt5.QtCore import QRect
 from enum import IntEnum
 
 
 class Puyo(IntEnum):
-    GARBAGE = 0
-    RED = 1
-    GREEN = 2
-    BLUE = 3
-    YELLOW = 4
-    PURPLE = 5
+    NONE = 0
+    GARBAGE = 1
+    RED = 2
+    GREEN = 3
+    BLUE = 4
+    YELLOW = 5
+    PURPLE = 6
 
 
 def puyoPixmap(puyo, skin_pixmap):
-    area = QRect(puyo * 64, 7 * 32, 64, 64)
+    if puyo is Puyo.NONE:
+        area = QRect(0, 9 * 32, 64, 64)
+    else:
+        area = QRect((puyo - 1) * 64, 7 * 32, 64, 64)
     return skin_pixmap.copy(area)
+
+
+class PuyoPanel(QAbstractButton):
+    def __init__(self, skin_pixmap, parent=None):
+        super(PuyoPanel, self).__init__(parent)
+        self.skin_pixmap = skin_pixmap
+        self.puyo = Puyo.NONE
+        self.puyo_pixmap = puyoPixmap(self.puyo, self.skin_pixmap)
+
+        self.clicked.connect(self.onClick)
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.drawPixmap(event.rect(), puyoPixmap(self.puyo, self.skin_pixmap))
+
+    def sizeHint(self):
+        return self.puyo_pixmap.size()
+
+    def onClick(self):
+        self.puyo = Puyo((self.puyo + 1) % 7)
+        self.update()
 
 
 def main():
 
     app = QApplication(sys.argv)
-
-    w = QMainWindow()
-    w.setWindowTitle("Puyo Trainer")
+    window = QWidget()
+    layout = QHBoxLayout(window)
 
     skin_pixmap = QPixmap("ppvs2_skins/gummy.png")
-    label = QLabel(w)
-    puyo_pixmap = puyoPixmap(Puyo.YELLOW, skin_pixmap)
-    label.setPixmap(puyo_pixmap)
-    w.setCentralWidget(label)
+    button = PuyoPanel(skin_pixmap)
+    layout.addWidget(button)
 
-    w.show()
+    window.show()
 
     sys.exit(app.exec_())
 
