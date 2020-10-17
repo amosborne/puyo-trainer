@@ -103,6 +103,10 @@ class PuyoPanel(QAbstractButton):
             self.puyo = Puyo((self.puyo + 1) % len(Puyo))
             self.updatePixmap(recurse=True)
 
+    def setPuyo(self, puyo):
+        self.puyo = puyo
+        self.updatePixmap(recurse=True)
+
 
 class PuyoBoard:
     def __init__(self, skin_pixmap):
@@ -141,6 +145,12 @@ class PuyoBoard:
                 if col > 0:
                     this_panel.left = self.layout.itemAtPosition(row, col - 1).widget()
 
+    def clearBoard(self):
+        for row in range(2, 15):
+            for col in range(6):
+                panel = self.layout.itemAtPosition(row, col).widget()
+                panel.setPuyo(Puyo.NONE)
+
 
 def main():
     app = QApplication(sys.argv)
@@ -156,7 +166,8 @@ def main():
     window_layout.addWidget(spacer)
 
     button = QPushButton()
-    button.setText("test button")
+    button.setText("Clear Board")
+    button.clicked.connect(board.clearBoard)
     window_layout.addWidget(button)
 
     window_layout.setSizeConstraint(QLayout.SetFixedSize)
