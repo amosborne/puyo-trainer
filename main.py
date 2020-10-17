@@ -11,27 +11,49 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtGui import QPixmap, QPainter
 from PyQt5.QtCore import QRect, Qt
-from enum import IntEnum
+from enum import IntEnum, auto
 from collections import namedtuple
 
 
 class Puyo(IntEnum):
-    NONE = 0
-    GARBAGE = 1
-    RED = 2
-    GREEN = 3
-    BLUE = 4
-    YELLOW = 5
-    PURPLE = 6
+    RED = 0
+    GREEN = 1
+    BLUE = 2
+    YELLOW = 3
+    PURPLE = 4
+    GARBAGE = 5
+    NONE = 6
 
 
-def puyoPixmap(puyo, skin_pixmap):
+def puyoPixmap(puyo, skin_pixmap, adj_match):
     if puyo is Puyo.NONE:
         area = QRect(0, 9 * 32, 32, 32)
     elif puyo is Puyo.GARBAGE:
         area = QRect(6 * 32, 12 * 32, 32, 32)
-    else:
-        area = QRect(15 * 32, (puyo - 2) * 32, 32, 32)
+    else:  # Only adjacencies of up to 3 puyos are supported.
+        if adj_match == [True, False, False, False]:
+            offset = 2
+        elif adj_match == [False, True, False, False]:
+            offset = 1
+        elif adj_match == [True, True, False, False]:
+            offset = 3
+        elif adj_match == [False, False, True, False]:
+            offset = 8
+        elif adj_match == [False, False, False, True]:
+            offset = 4
+        elif adj_match == [False, False, True, True]:
+            offset = 12
+        elif adj_match == [True, False, True, False]:
+            offset = 10
+        elif adj_match == [True, False, False, True]:
+            offset = 6
+        elif adj_match == [False, True, True, False]:
+            offset = 9
+        elif adj_match == [False, True, False, True]:
+            offset = 5
+        else:
+            offset = 0
+        area = QRect(offset * 32, puyo * 32, 32, 32)
     return skin_pixmap.copy(area)
 
 
@@ -40,11 +62,18 @@ class PuyoPanel(QAbstractButton):
         super(PuyoPanel, self).__init__(parent)
         self.skin_pixmap = skin_pixmap
         self.puyo = Puyo.NONE
-        self.puyo_pixmap = puyoPixmap(self.puyo, self.skin_pixmap)
+        self.puyo_pixmap = puyoPixmap(
+            self.puyo, self.skin_pixmap, [False for _ in range(4)]
+        )
 
         self.opaque = opaque
         self.clickable = clickable
         self.clicked.connect(self.onClick)
+
+        self.top = None
+        self.bottom = None
+        self.left = None
+        self.right = None
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -55,11 +84,24 @@ class PuyoPanel(QAbstractButton):
     def sizeHint(self):
         return self.puyo_pixmap.size()
 
+    def updatePixmap(self, recurse=False):
+
+        adjacent_panels = [self.top, self.bottom, self.left, self.right]
+        adjacent_match = [False for _ in range(4)]
+        for idx, panel in enumerate(adjacent_panels):
+            if panel is not None:
+                if recurse:
+                    panel.updatePixmap()
+                if panel.puyo is self.puyo:
+                    adjacent_match[idx] = True
+
+        self.puyo_pixmap = puyoPixmap(self.puyo, self.skin_pixmap, adjacent_match)
+        self.update()
+
     def onClick(self):
         if self.clickable:
-            self.puyo = Puyo((self.puyo + 1) % 7)
-            self.puyo_pixmap = puyoPixmap(self.puyo, self.skin_pixmap)
-            self.update()
+            self.puyo = Puyo((self.puyo + 1) % len(Puyo))
+            self.updatePixmap(recurse=True)
 
 
 class PuyoBoard:
@@ -67,16 +109,37 @@ class PuyoBoard:
         self.layout = QGridLayout()
         self.layout.setHorizontalSpacing(0)
         self.layout.setVerticalSpacing(0)
+
+        # Populate the grid layout with the puyo panels.
         for row in range(15):
             for col in range(6):
-                if row > 1:  # first two rows hold the piece about to be placed
-                    if row == 2:  # third row is the hidden row
+                if row > 1:  # First two rows hold the piece about to be placed.
+                    if row == 2:  # Third row is the hidden row.
                         panel = PuyoPanel(skin_pixmap, clickable=True, opaque=True)
                     else:
                         panel = PuyoPanel(skin_pixmap, clickable=True, opaque=False)
                 else:
                     panel = PuyoPanel(skin_pixmap, clickable=False, opaque=False)
                 self.layout.addWidget(panel, row, col)
+
+        # Assign panel adjacencies.
+        self.assignAdjacencies(3, 15)
+        self.assignAdjacencies(0, 2)
+
+    def assignAdjacencies(self, rowmin, rowmax):
+        for row in range(rowmin, rowmax):
+            for col in range(6):
+                this_panel = self.layout.itemAtPosition(row, col).widget()
+                if row < rowmax - 1:
+                    this_panel.bottom = self.layout.itemAtPosition(
+                        row + 1, col
+                    ).widget()
+                if row > rowmin:
+                    this_panel.top = self.layout.itemAtPosition(row - 1, col).widget()
+                if col < 5:
+                    this_panel.right = self.layout.itemAtPosition(row, col + 1).widget()
+                if col > 0:
+                    this_panel.left = self.layout.itemAtPosition(row, col - 1).widget()
 
 
 def main():
