@@ -40,9 +40,11 @@ class HoverArea(QWidget):
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
 
+        self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+
         for row in range(2):
             for col in range(NCOLS):
-                layout.addWidget(PuyoPanel(skin_pixmap, clickable=False), row, col)
+                layout.addWidget(PuyoPanel(skin_pixmap), row, col)
 
         assignAdjacencies(layout, 0, 2)
 
@@ -83,11 +85,6 @@ class BoardArea(QFrame):
 class PuyoBoard(QVBoxLayout):
     def __init__(self, skin_pixmap, clickable=False, parent=None):
         super(PuyoBoard, self).__init__(parent)
-
-        label = QLabel()
-        label.setText("Initial Board")
-        label.setAlignment(Qt.AlignCenter)
-        self.addWidget(label)
 
         self.hover_area = HoverArea(skin_pixmap)
         self.addWidget(self.hover_area)

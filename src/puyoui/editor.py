@@ -1,10 +1,13 @@
 from PyQt5.QtWidgets import (
     QMainWindow,
     QWidget,
+    QStackedWidget,
     QHBoxLayout,
+    QVBoxLayout,
     QFrame,
     QPushButton,
     QLayout,
+    QSizePolicy,
 )
 from puyoui.board import PuyoBoard
 
@@ -37,49 +40,71 @@ return to the editor or to save the solution anyways.
 """
 
 
-class PairedWindow(QMainWindow):
-    def __init__(self, parent=None):
-        super(PairedWindow, self).__init__(parent)
-        self.linked_windows = []
+class DefineWindow(QWidget):
+    def __init__(self, skin, board=None, drawpile=None, parent=None):
+        super(DefineWindow, self).__init__(parent)
 
-    def link(self, window, mutual=True):
-        self.linked_windows.append(window)
-        if mutual:
-            window.link(self, mutual=False)
+        layout = QHBoxLayout(self)  # hbox
 
-    def closeEvent(self, event):
-        for window in self.linked_windows:
-            window.close()
-        event.accept()
-
-
-class Editor:
-    def __init__(self, skin, src=None, ascopy=False):
-        # Initialize the initial board window.
-        ib_window = PairedWindow()
-        c_widget = QWidget()
-        ib_window.setCentralWidget(c_widget)
-
-        board = PuyoBoard(skin, clickable=True)
-        layout = QHBoxLayout(c_widget)
+        # left side - initial board editor and button controls
+        board = PuyoBoard(skin, clickable=True)  # vbox
         layout.addLayout(board)
 
-        button = QPushButton()
-        button.setText("Clear Board")
-        button.clicked.connect(board.clear)
-        layout.addWidget(button)
+        clear_button = QPushButton()
+        clear_button.setText("Clear Board")
+        clear_button.clicked.connect(board.clear)
+        board.addWidget(clear_button)
+        clear_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
 
-        ib_window.show()
-        ib_window.setFixedSize(ib_window.size())
-        self.initial_board_window = ib_window
-        self.initial_board = board
+        empty_button = QPushButton()
+        empty_button.setText("Empty Drawpile")
+        board.addWidget(empty_button)
+        empty_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
 
-        # Initialize the puyo sequence window.
-        # ps_window = PairedWindow()
-        # c_widget = QWidget()
-        # ps_window.setCentralWidget(c_widget)
+        moreless = QWidget()
+        moreless_layout = QHBoxLayout(moreless)  # hbox
+        # moreless_layout.setSpacing(0)
+        moreless_layout.setContentsMargins(0, 0, 0, 0)
+        moreless.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
 
-        # ps_window.show()
-        # self.puyo_sequence_window = ps_window
+        less_button = QPushButton()
+        less_button.setText("Drawpile Less")
+        moreless_layout.addWidget(less_button)
+        less_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
+        more_button = QPushButton()
+        more_button.setText("Drawpile More")
+        more_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
+        moreless_layout.addWidget(more_button)
+        board.addWidget(moreless)
 
-        # ib_window.link(ps_window)
+        start_button = QPushButton()
+        start_button.setText("Start Solution")
+        start_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
+        board.addWidget(start_button)
+
+        cancel_button = QPushButton()
+        cancel_button.setText("Close Editor (No Save)")
+        cancel_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
+        board.addWidget(cancel_button)
+
+        # right side - puyo drawpile
+        drawpile = QVBoxLayout()
+        layout.addLayout(drawpile)
+        test = QPushButton()
+        test.setText("test")
+        drawpile.addWidget(test)
+        test.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+
+
+class Editor(QMainWindow):
+    def __init__(self, skin, src=None, ascopy=False, parent=None):
+        super(Editor, self).__init__(parent)
+
+        editor = QStackedWidget()
+        self.setCentralWidget(editor)
+
+        define_window = DefineWindow(skin)
+        editor.addWidget(define_window)
+        self.define_window = define_window
+
+        self.show()
