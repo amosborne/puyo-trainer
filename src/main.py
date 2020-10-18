@@ -1,4 +1,5 @@
 import sys
+from puyoui.gui import runApp
 
 
 def main():

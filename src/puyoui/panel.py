@@ -27,14 +27,14 @@ class PuyoPanel(QAbstractButton):
 
         self.updatePixmap(mutual=False)
 
+    def sizeHint(self):
+        return self.puyo_pixmap.size()
+
     def paintEvent(self, event):
         painter = QPainter(self)
         if self.opaque:
             painter.setOpacity(0.50)
         painter.drawPixmap(event.rect(), self.puyo_pixmap)
-
-    def sizeHint(self):
-        return self.puyo_pixmap.size()
 
     def updatePixmap(self, mutual=True):
 

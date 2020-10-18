@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import (
     QHBoxLayout,
     QFrame,
     QPushButton,
+    QLayout,
 )
 from puyoui.board import PuyoBoard
 
@@ -59,13 +60,9 @@ class Editor:
         c_widget = QWidget()
         ib_window.setCentralWidget(c_widget)
 
-        board = PuyoBoard(skin)
+        board = PuyoBoard(skin, clickable=True)
         layout = QHBoxLayout(c_widget)
-        layout.addLayout(board.layout)
-
-        spacer = QFrame()
-        spacer.setFrameShape(QFrame.VLine)
-        layout.addWidget(spacer)
+        layout.addLayout(board)
 
         button = QPushButton()
         button.setText("Clear Board")
@@ -78,11 +75,11 @@ class Editor:
         self.initial_board = board
 
         # Initialize the puyo sequence window.
-        ps_window = PairedWindow()
-        c_widget = QWidget()
-        ps_window.setCentralWidget(c_widget)
+        # ps_window = PairedWindow()
+        # c_widget = QWidget()
+        # ps_window.setCentralWidget(c_widget)
 
-        ps_window.show()
-        self.puyo_sequence_window = ps_window
+        # ps_window.show()
+        # self.puyo_sequence_window = ps_window
 
-        ib_window.link(ps_window)
+        # ib_window.link(ps_window)
