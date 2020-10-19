@@ -53,11 +53,9 @@ class BoardArea(QFrame):
     def __init__(self, skin_pixmap, clickable=False, parent=None):
         super(BoardArea, self).__init__(parent)
 
-        border_width = 2
-
         self.setFrameShape(QFrame.Box)
         self.setFrameShadow(QFrame.Plain)
-        self.setLineWidth(border_width)
+        self.setLineWidth(2)
 
         layout = QGridLayout(self)
         layout.setSpacing(0)

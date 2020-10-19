@@ -4,107 +4,153 @@ from PyQt5.QtWidgets import (
     QStackedWidget,
     QHBoxLayout,
     QVBoxLayout,
+    QGridLayout,
     QFrame,
     QPushButton,
     QLayout,
     QSizePolicy,
+    QLabel,
+    QScrollArea,
 )
+from PyQt5.QtCore import Qt
 from puyoui.board import PuyoBoard
+from puyoui.panel import PuyoPanel
+from puyolib.puyo import Puyo
 
-"""
-The editor opens two windows:
-   1. A window to assign the initial board state.
-   2. A window to assign the sequence of puyos to draw.
 
-If one of the above windows is closed, the other is
-automatically closed and the editor concludes without
-taking any further action.
+def addButton(
+    layout,
+    text="",
+    callback=lambda: None,
+    sizepolicy=(QSizePolicy.Minimum, QSizePolicy.Fixed),
+    stylesheet="",
+):
+    """Add button with text to layout with click callback, size policy, and stylesheet."""
+    button = QPushButton()
+    button.setText(text)
+    button.clicked.connect(callback)
+    button.setSizePolicy(*sizepolicy)
+    button.setStyleSheet(stylesheet)
+    layout.addWidget(button)
 
-Both windows have the same set of buttons for start and
-cancel. Cancel closes the editor; start closes the two
-windows and opens a new window where the user will play
-the defined problem. Once complete, the save button will
-become available. The user may otherwise cancel or close
-the editor or press the back button to reopen the initial
-two windows for further editing.
 
-A problem may not be started unless there are atleast two
-puyo pairs to be drawn. There are no other guard rails
-implemented while a problem is being solved. Puyo pops are
-not detected nor is the ability to utilize the vanish row.
+class DrawpileElement(QHBoxLayout):
+    def __init__(self, skin, index, parent=None):
+        super(DrawpileElement, self).__init__(parent)
 
-Upon saving, the problem solution will be compared to other
-problems in the same module. A warning will be displayed if
-there is a logical conflict; the user has the option to
-return to the editor or to save the solution anyways.
-"""
+        # initialize index label
+        index_label = QLabel()
+        index_label.setFixedWidth(25)
+        index_label.setAlignment(Qt.AlignCenter)
+        self.addWidget(index_label)
+        self.index_label = index_label
+        self.setIndex(index)
+
+        # initialize puyo pair
+        puyopair = QFrame()
+        puyopair.setFrameShape(QFrame.Box)
+        puyopair.setFrameShadow(QFrame.Plain)
+        puyopair.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        puyo1 = PuyoPanel(skin, clickable=True)
+        puyo2 = PuyoPanel(skin, clickable=True)
+        puyo1.south = puyo2
+        puyo2.north = puyo1
+
+        layout = QVBoxLayout(puyopair)
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(puyo1)
+        layout.addWidget(puyo2)
+
+        self.addWidget(puyopair)
+        self.puyo1 = puyo1
+        self.puyo2 = puyo2
+
+        # initialize button controls
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        addButton(
+            layout=layout,
+            text="Delete",
+            sizepolicy=(QSizePolicy.Expanding, QSizePolicy.Minimum),
+        )
+        addButton(
+            layout=layout,
+            text="Insert Below",
+            sizepolicy=(QSizePolicy.Expanding, QSizePolicy.Minimum),
+        )
+        self.addLayout(layout)
+
+    def setIndex(self, index):
+        self.index = index
+        self.index_label.setText(str(index + 1))
+
+    def getPuyos(self):
+        return (self.puyo1.puyo, self.puyo2.puyo)
+
+
+class Drawpile(QScrollArea):
+    def __init__(self, skin, parent=None):
+        super(Drawpile, self).__init__(parent)
+
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+
+        for i in range(12):
+            layout.addLayout(DrawpileElement(skin, i))
+
+        layout.addStretch()
+        self.setMinimumWidth(
+            layout.sizeHint().width()
+            + 2 * self.frameWidth()
+            + self.verticalScrollBar().sizeHint().width()
+        )
+
+        self.setWidget(widget)
+        self.setWidgetResizable(True)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
 
 
 class DefineWindow(QWidget):
-    def __init__(self, skin, board=None, drawpile=None, parent=None):
+    def __init__(self, skin, parent=None):
         super(DefineWindow, self).__init__(parent)
 
-        layout = QHBoxLayout(self)  # hbox
+        # initialize right side - puyo drawpile
+        drawpile = Drawpile(skin)  # widget
 
-        # left side - initial board editor and button controls
+        # initialize left side - initial board editor and button controls
         board = PuyoBoard(skin, clickable=True)  # vbox
+
+        addButton(
+            layout=board,
+            text="Clear Board",
+            callback=board.clear,
+            sizepolicy=(QSizePolicy.Minimum, QSizePolicy.Expanding),
+        )
+        addButton(
+            layout=board,
+            text="Empty Drawpile",
+            sizepolicy=(QSizePolicy.Minimum, QSizePolicy.Expanding),
+        )
+        addButton(
+            layout=board,
+            text="Start Solution",
+            sizepolicy=(QSizePolicy.Minimum, QSizePolicy.Expanding),
+            stylesheet="background-color: green",
+        )
+
+        # construct layout
+        layout = QHBoxLayout(self)
         layout.addLayout(board)
-
-        clear_button = QPushButton()
-        clear_button.setText("Clear Board")
-        clear_button.clicked.connect(board.clear)
-        board.addWidget(clear_button)
-        clear_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
-
-        empty_button = QPushButton()
-        empty_button.setText("Empty Drawpile")
-        board.addWidget(empty_button)
-        empty_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
-
-        moreless = QWidget()
-        moreless_layout = QHBoxLayout(moreless)  # hbox
-        # moreless_layout.setSpacing(0)
-        moreless_layout.setContentsMargins(0, 0, 0, 0)
-        moreless.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
-
-        less_button = QPushButton()
-        less_button.setText("Drawpile Less")
-        moreless_layout.addWidget(less_button)
-        less_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
-        more_button = QPushButton()
-        more_button.setText("Drawpile More")
-        more_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
-        moreless_layout.addWidget(more_button)
-        board.addWidget(moreless)
-
-        start_button = QPushButton()
-        start_button.setText("Start Solution")
-        start_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
-        board.addWidget(start_button)
-
-        cancel_button = QPushButton()
-        cancel_button.setText("Close Editor (No Save)")
-        cancel_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
-        board.addWidget(cancel_button)
-
-        # right side - puyo drawpile
-        drawpile = QVBoxLayout()
-        layout.addLayout(drawpile)
-        test = QPushButton()
-        test.setText("test")
-        drawpile.addWidget(test)
-        test.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        layout.addWidget(drawpile)
 
 
 class Editor(QMainWindow):
-    def __init__(self, skin, src=None, ascopy=False, parent=None):
+    def __init__(self, skin, parent=None):
         super(Editor, self).__init__(parent)
 
-        editor = QStackedWidget()
-        self.setCentralWidget(editor)
-
-        define_window = DefineWindow(skin)
-        editor.addWidget(define_window)
-        self.define_window = define_window
+        self.setCentralWidget(QStackedWidget())
+        self.centralWidget().addWidget(DefineWindow(skin))
 
         self.show()

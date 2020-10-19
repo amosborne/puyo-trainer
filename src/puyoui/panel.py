@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QAbstractButton
+from PyQt5.QtWidgets import QAbstractButton, QSizePolicy
 from PyQt5.QtGui import QPainter
 from PyQt5.QtCore import QRect
 from puyolib.puyo import Puyo, AdjMatch
@@ -34,7 +34,7 @@ class PuyoPanel(QAbstractButton):
         painter = QPainter(self)
         if self.opaque:
             painter.setOpacity(0.50)
-        painter.drawPixmap(event.rect(), self.puyo_pixmap)
+        painter.drawPixmap(self.rect(), self.puyo_pixmap)
 
     def updatePixmap(self, mutual=True):
 
