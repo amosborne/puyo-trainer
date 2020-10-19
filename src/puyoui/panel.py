@@ -11,10 +11,13 @@ to select the correct graphic.
 
 
 class PuyoPanel(QAbstractButton):
-    def __init__(self, skin_pixmap, clickable=False, opaque=False, parent=None):
+    def __init__(
+        self, skin_pixmap, clickable=False, opaque=False, coloronly=False, parent=None
+    ):
         super(PuyoPanel, self).__init__(parent)
         self.skin_pixmap = skin_pixmap
-        self.puyo = Puyo.NONE
+        self.coloronly = coloronly
+        self.puyo = Puyo.NONE if not coloronly else Puyo.RED
 
         self.opaque = opaque
         self.clickable = clickable
@@ -65,6 +68,10 @@ class PuyoPanel(QAbstractButton):
     def onClick(self):
         if self.clickable:
             self.puyo = Puyo.cycle(self.puyo)
+            while self.coloronly and (
+                self.puyo is Puyo.NONE or self.puyo is Puyo.GARBAGE
+            ):
+                self.puyo = Puyo.cycle(self.puyo)
             self.updatePixmap()
 
     def setPuyo(self, puyo):

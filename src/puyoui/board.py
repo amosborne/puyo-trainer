@@ -1,12 +1,10 @@
 from PyQt5.QtWidgets import (
     QWidget,
     QFrame,
-    QLabel,
     QVBoxLayout,
     QGridLayout,
     QSizePolicy,
 )
-from PyQt5.QtCore import QSize, Qt
 from puyoui.panel import PuyoPanel
 
 """
@@ -81,13 +79,16 @@ class BoardArea(QFrame):
 
 
 class PuyoBoard(QVBoxLayout):
-    def __init__(self, skin_pixmap, clickable=False, parent=None):
+    def __init__(self, skin, clickable=False, parent=None):
         super(PuyoBoard, self).__init__(parent)
 
-        self.hover_area = HoverArea(skin_pixmap)
-        self.addWidget(self.hover_area)
+        if not clickable:
+            self.hover_area = HoverArea(skin)
+            self.addWidget(self.hover_area)
+        else:
+            self.hover_area = None
 
-        self.board_area = BoardArea(skin_pixmap, clickable=clickable)
+        self.board_area = BoardArea(skin, clickable=clickable)
         self.addWidget(self.board_area)
 
     def clear(self):

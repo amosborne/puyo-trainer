@@ -4,10 +4,8 @@ from PyQt5.QtWidgets import (
     QStackedWidget,
     QHBoxLayout,
     QVBoxLayout,
-    QGridLayout,
     QFrame,
     QPushButton,
-    QLayout,
     QSizePolicy,
     QLabel,
     QScrollArea,
@@ -15,7 +13,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 from puyoui.board import PuyoBoard
 from puyoui.panel import PuyoPanel
-from puyolib.puyo import Puyo
+from puyoui.qtutils import deleteItemsOfLayout
 
 
 def addButton(
@@ -35,8 +33,10 @@ def addButton(
 
 
 class DrawpileElement(QHBoxLayout):
-    def __init__(self, skin, index, parent=None):
+    def __init__(self, drawpile, skin, parent=None):
         super(DrawpileElement, self).__init__(parent)
+
+        self.drawpile = drawpile
 
         # initialize index label
         index_label = QLabel()
@@ -44,15 +44,15 @@ class DrawpileElement(QHBoxLayout):
         index_label.setAlignment(Qt.AlignCenter)
         self.addWidget(index_label)
         self.index_label = index_label
-        self.setIndex(index)
+        self.setIndex(drawpile.count())
 
         # initialize puyo pair
         puyopair = QFrame()
         puyopair.setFrameShape(QFrame.Box)
         puyopair.setFrameShadow(QFrame.Plain)
         puyopair.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        puyo1 = PuyoPanel(skin, clickable=True)
-        puyo2 = PuyoPanel(skin, clickable=True)
+        puyo1 = PuyoPanel(skin, clickable=True, coloronly=True)
+        puyo2 = PuyoPanel(skin, clickable=True, coloronly=True)
         puyo1.south = puyo2
         puyo2.north = puyo1
 
@@ -96,20 +96,28 @@ class Drawpile(QScrollArea):
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
-        for i in range(12):
-            layout.addLayout(DrawpileElement(skin, i))
-
+        layout.addLayout(DrawpileElement(layout, skin))
+        layout.addLayout(DrawpileElement(layout, skin))
         layout.addStretch()
+
+        self.layout = layout
+        self.skin = skin
+
         self.setMinimumWidth(
             layout.sizeHint().width()
             + 2 * self.frameWidth()
             + self.verticalScrollBar().sizeHint().width()
         )
-
         self.setWidget(widget)
         self.setWidgetResizable(True)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+
+    def reset(self):
+        deleteItemsOfLayout(self.layout)
+        self.layout.addLayout(DrawpileElement(self.layout, self.skin))
+        self.layout.addLayout(DrawpileElement(self.layout, self.skin))
+        self.layout.addStretch()
 
 
 class DefineWindow(QWidget):
@@ -124,13 +132,14 @@ class DefineWindow(QWidget):
 
         addButton(
             layout=board,
-            text="Clear Board",
+            text="Reset Board",
             callback=board.clear,
             sizepolicy=(QSizePolicy.Minimum, QSizePolicy.Expanding),
         )
         addButton(
             layout=board,
-            text="Empty Drawpile",
+            text="Reset Drawpile",
+            callback=drawpile.reset,
             sizepolicy=(QSizePolicy.Minimum, QSizePolicy.Expanding),
         )
         addButton(
