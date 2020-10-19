@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 from puyoui.board import PuyoBoard
 from puyoui.panel import PuyoPanel
-from puyoui.qtutils import deleteItemsOfLayout
+from puyoui.qtutils import deleteItemsOfLayout, deleteItemOfLayout
 
 
 def addButton(
@@ -36,15 +36,13 @@ class DrawpileElement(QHBoxLayout):
     def __init__(self, drawpile, skin, parent=None):
         super(DrawpileElement, self).__init__(parent)
 
-        self.drawpile = drawpile
-
         # initialize index label
         index_label = QLabel()
         index_label.setFixedWidth(25)
         index_label.setAlignment(Qt.AlignCenter)
         self.addWidget(index_label)
         self.index_label = index_label
-        self.setIndex(drawpile.count())
+        self.setIndex(drawpile.getItemCount())
 
         # initialize puyo pair
         puyopair = QFrame()
@@ -72,6 +70,7 @@ class DrawpileElement(QHBoxLayout):
         addButton(
             layout=layout,
             text="Delete",
+            callback=lambda: drawpile.deleteItem(self.index),
             sizepolicy=(QSizePolicy.Expanding, QSizePolicy.Minimum),
         )
         addButton(
@@ -95,29 +94,36 @@ class Drawpile(QScrollArea):
 
         widget = QWidget()
         layout = QVBoxLayout(widget)
+        self.setWidget(widget)
 
-        layout.addLayout(DrawpileElement(layout, skin))
-        layout.addLayout(DrawpileElement(layout, skin))
-        layout.addStretch()
-
-        self.layout = layout
+        self.items = layout
         self.skin = skin
+
+        layout.addLayout(DrawpileElement(self, skin))
+        layout.addLayout(DrawpileElement(self, skin))
+        layout.addStretch()
 
         self.setMinimumWidth(
             layout.sizeHint().width()
             + 2 * self.frameWidth()
             + self.verticalScrollBar().sizeHint().width()
         )
-        self.setWidget(widget)
+
         self.setWidgetResizable(True)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
 
+    def getItemCount(self):
+        return self.items.count()
+
     def reset(self):
-        deleteItemsOfLayout(self.layout)
-        self.layout.addLayout(DrawpileElement(self.layout, self.skin))
-        self.layout.addLayout(DrawpileElement(self.layout, self.skin))
-        self.layout.addStretch()
+        deleteItemsOfLayout(self.items)
+        self.items.addLayout(DrawpileElement(self, self.skin))
+        self.items.addLayout(DrawpileElement(self, self.skin))
+        self.items.addStretch()
+
+    def deleteItem(self, index):
+        deleteItemOfLayout(self.items, index)
 
 
 class DefineWindow(QWidget):
