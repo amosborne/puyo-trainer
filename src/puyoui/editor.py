@@ -42,7 +42,7 @@ class DrawpileElement(QHBoxLayout):
         index_label.setAlignment(Qt.AlignCenter)
         self.addWidget(index_label)
         self.index_label = index_label
-        self.setIndex(drawpile.getItemCount())
+        self.setIndex(drawpile.layout().count())
 
         # initialize puyo pair
         puyopair = QFrame()
@@ -93,16 +93,13 @@ class Drawpile(QScrollArea):
     def __init__(self, skin, parent=None):
         super(Drawpile, self).__init__(parent)
 
+        self.skin = skin
+
         widget = QWidget()
         layout = QVBoxLayout(widget)
         self.setWidget(widget)
 
-        self.items = layout
-        self.skin = skin
-
-        layout.addLayout(DrawpileElement(self, skin))
-        layout.addLayout(DrawpileElement(self, skin))
-        layout.addStretch()
+        self.reset()
 
         self.setMinimumWidth(
             layout.sizeHint().width()
@@ -114,45 +111,57 @@ class Drawpile(QScrollArea):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
 
-    def getItemCount(self):
-        return self.items.count()
+    def layout(self):
+        return self.widget().layout()
 
     def reset(self):
-        deleteItemsOfLayout(self.items)
-        self.items.addLayout(DrawpileElement(self, self.skin))
-        self.items.addLayout(DrawpileElement(self, self.skin))
-        self.items.addStretch()
+        deleteItemsOfLayout(self.layout())
+        self.layout().addLayout(DrawpileElement(self, self.skin))
+        self.layout().addLayout(DrawpileElement(self, self.skin))
+        self.layout().addStretch()
+
+    def renumber(self):
+        for i in range(self.layout().count()):
+            item = self.layout().itemAt(i)
+            layout = item.layout()
+            if layout is not None:
+                layout.setIndex(i)
 
     def insertItem(self, index):
-        self.items.insertLayout(index, DrawpileElement(self, self.skin))
-        for i in range(self.items.count()):
-            item = self.items.itemAt(i)
-            layout = item.layout()
-            if layout is not None:
-                layout.setIndex(i)
+        self.layout().insertLayout(index, DrawpileElement(self, self.skin))
+        self.renumber()
 
     def deleteItem(self, index):
-        deleteItemOfLayout(self.items, index)
-        for i in range(self.items.count()):
-            item = self.items.itemAt(i)
+        if self.layout().count() <= 3:  # one extra for the vertical spacer
+            return
+
+        deleteItemOfLayout(self.layout(), index)
+        self.renumber()
+
+    def toList(self):
+        result = []
+        for i in range(self.layout().count()):
+            item = self.layout().itemAt(i)
             layout = item.layout()
             if layout is not None:
-                layout.setIndex(i)
+                result.append(layout.getPuyos())
+
+        return result
 
 
 class DefineWindow(QWidget):
-    def __init__(self, skin, parent=None):
+    def __init__(self, editor, parent=None):
         super(DefineWindow, self).__init__(parent)
 
         # initialize right side - puyo drawpile
-        drawpile = Drawpile(skin)  # widget
+        drawpile = Drawpile(editor.skin)  # widget
 
         # initialize left side - initial board editor and button controls
-        board = PuyoBoard(skin, clickable=True)  # vbox
+        board = PuyoBoard(editor.skin, clickable=True)  # vbox
 
         addButton(
             layout=board,
-            text="Reset Board",
+            text="Clear Board",
             callback=board.clear,
             sizepolicy=(QSizePolicy.Minimum, QSizePolicy.Expanding),
         )
@@ -165,6 +174,7 @@ class DefineWindow(QWidget):
         addButton(
             layout=board,
             text="Start Solution",
+            callback=editor.solve,
             sizepolicy=(QSizePolicy.Minimum, QSizePolicy.Expanding),
             stylesheet="background-color: green",
         )
@@ -174,12 +184,25 @@ class DefineWindow(QWidget):
         layout.addLayout(board)
         layout.addWidget(drawpile)
 
+        self.drawpile = drawpile
+        self.board = board
+
+    def drawpileList(self):
+        return self.drawpile.toList()
+
 
 class Editor(QMainWindow):
     def __init__(self, skin, parent=None):
         super(Editor, self).__init__(parent)
 
+        self.skin = skin
+        self.define_window = DefineWindow(self)  # widget
+
         self.setCentralWidget(QStackedWidget())
-        self.centralWidget().addWidget(DefineWindow(skin))
+        self.centralWidget().addWidget(self.define_window)
 
         self.show()
+
+    def solve(self):
+        print("Drawpile:")
+        print(self.define_window.drawpileList())
