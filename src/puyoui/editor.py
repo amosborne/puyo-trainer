@@ -76,6 +76,7 @@ class DrawpileElement(QHBoxLayout):
         addButton(
             layout=layout,
             text="Insert Below",
+            callback=lambda: drawpile.insertItem(self.index + 1),
             sizepolicy=(QSizePolicy.Expanding, QSizePolicy.Minimum),
         )
         self.addLayout(layout)
@@ -121,6 +122,14 @@ class Drawpile(QScrollArea):
         self.items.addLayout(DrawpileElement(self, self.skin))
         self.items.addLayout(DrawpileElement(self, self.skin))
         self.items.addStretch()
+
+    def insertItem(self, index):
+        self.items.insertLayout(index, DrawpileElement(self, self.skin))
+        for i in range(self.items.count()):
+            item = self.items.itemAt(i)
+            layout = item.layout()
+            if layout is not None:
+                layout.setIndex(i)
 
     def deleteItem(self, index):
         deleteItemOfLayout(self.items, index)
