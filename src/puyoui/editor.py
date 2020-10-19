@@ -124,6 +124,11 @@ class Drawpile(QScrollArea):
 
     def deleteItem(self, index):
         deleteItemOfLayout(self.items, index)
+        for i in range(self.items.count()):
+            item = self.items.itemAt(i)
+            layout = item.layout()
+            if layout is not None:
+                layout.setIndex(i)
 
 
 class DefineWindow(QWidget):
