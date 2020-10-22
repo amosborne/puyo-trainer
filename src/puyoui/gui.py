@@ -4,8 +4,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout
 # from puyoui.editor import Editor
 from puyoui.puyoview import PuyoView, PuyoGridView
 from puyoui.editorview import DrawpileElementView
-from functools import partial
-import numpy as np
+from puyolib.puyomodel import PuyoPuzzleModel
 
 
 def runApp():
@@ -28,5 +27,8 @@ def runApp():
     layout.addWidget(puyogrid)
 
     win.show()
+
+    pz = PuyoPuzzleModel.new(13, 6)
+    puyogrid.setGraphics(*pz.getBoardGraphics())
 
     return app.exec_()

@@ -12,15 +12,11 @@ The view controller may connect to the view to detect click events.
 # A view of a single, clickable puyo.
 # Specify the graphic by skin file, pixel rectangle, and opacity.
 class PuyoView(QAbstractButton):
-    # clickedSignal = pyqtSignal(tuple)
-
     def __init__(self, skin, rect, opacity, parent=None):
         super().__init__(parent)
 
         self.skin = QPixmap(skin)
         self.setGraphic(rect, opacity)
-
-        # self.clicked.connect(partial(self.clickedSignal.emit, (1, 2)))
 
     def setGraphic(self, rect, opacity):
         self.image = self.skin.copy(QRect(*rect))
@@ -67,3 +63,10 @@ class PuyoGridView(QFrame):
     def setGraphic(self, pos, rect, opacity):
         puyoview = self.layout().itemAtPosition(*pos).widget()
         puyoview.setGraphic(rect, opacity)
+
+    def setGraphics(self, rects, opacities):
+        for row_idx, row in enumerate(rects):
+            for col_idx, rect in enumerate(row):
+                pos = (row_idx, col_idx)
+                opacity = opacities[row_idx][col_idx]
+                self.setGraphic(pos, rect, opacity)
