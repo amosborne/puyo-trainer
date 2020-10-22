@@ -1,26 +1,32 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout
 
 # from PyQt5.QtGui import QPixmap
 # from puyoui.editor import Editor
 from puyoui.puyoview import PuyoView, PuyoGridView
+from puyoui.editorview import DrawpileElementView
 from functools import partial
+import numpy as np
 
 
 def runApp():
 
     app = QApplication([])
     win = QMainWindow()
+    widget = QWidget()
+    win.setCentralWidget(widget)
 
-    pgv = PuyoGridView(
-        size=(2, 2),
-        skin_file="../ppvs2_skins/gummy.png",
-        click_callback=lambda x: print(x),
-        init_rect=(0, 0, 32, 32),
-        init_opacity=1,
+    puyogrid = PuyoGridView(
+        skin="../ppvs2_skins/gummy.png",
+        rects=[[(0, 0, 32, 32) for _ in range(6)] for _ in range(13)],
+        opacities=[[1 for _ in range(6)] for _ in range(13)],
         isframed=True,
     )
 
-    win.setCentralWidget(pgv)
+    puyogrid.clicked.connect(lambda x: print(x))
+
+    layout = QVBoxLayout(widget)
+    layout.addWidget(puyogrid)
+
     win.show()
 
     return app.exec_()

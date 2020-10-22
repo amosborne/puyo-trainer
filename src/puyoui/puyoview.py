@@ -1,54 +1,48 @@
 from PyQt5.QtWidgets import QAbstractButton, QFrame, QGridLayout, QSizePolicy
 from PyQt5.QtGui import QPixmap, QPainter
-from PyQt5.QtCore import QRect, Qt
+from PyQt5.QtCore import QRect, Qt, pyqtSignal
 from functools import partial
 
+"""
+This module creates UI elements for viewing puyo graphics on a grid.
+The view controller is responsible for specifying the graphics displayed.
+The view controller may connect to the view to detect click events.
+"""
 
-# Creates UI elements for viewing and clicking a single puyo or a grid of puyos.
-
-
+# A view of a single, clickable puyo.
+# Specify the graphic by skin file, pixel rectangle, and opacity.
 class PuyoView(QAbstractButton):
-    def __init__(self, skin_file, click_callback, init_rect, init_opacity):
-        """
-        skin_file, the skin image file name the pixel box is drawn from.
-        click_callback, the function called during a click event.
-        init_rect, the initial pixel box (top, left, heigh, width).
-        init_opacity, the initial opacity.
-        """
-        super().__init__()
+    # clickedSignal = pyqtSignal(tuple)
 
-        self.skin_pixmap = QPixmap(skin_file)
-        self.clicked.connect(click_callback)
-        self.setGraphic(init_rect, init_opacity)
+    def __init__(self, skin, rect, opacity, parent=None):
+        super().__init__(parent)
+
+        self.skin = QPixmap(skin)
+        self.setGraphic(rect, opacity)
+
+        # self.clicked.connect(partial(self.clickedSignal.emit, (1, 2)))
+
+    def setGraphic(self, rect, opacity):
+        self.image = self.skin.copy(QRect(*rect))
+        self.opacity = opacity
+        self.update()
 
     def paintEvent(self, _):
         painter = QPainter(self)
         painter.setOpacity(self.opacity)
-        painter.drawPixmap(self.rect(), self.puyo_pixmap)
+        painter.drawPixmap(self.rect(), self.image)
 
     def sizeHint(self):
-        return self.puyo_pixmap.size()
-
-    def setGraphic(self, rect, opacity):
-        self.puyo_pixmap = self.skin_pixmap.copy(QRect(*rect))
-        self.opacity = opacity
-        self.update()
+        return self.image.size()
 
 
+# A view of a grid of clickable puyos. May or may not be framed.
+# Specify the graphics by skin file, pixel rectangles, and opacities.
 class PuyoGridView(QFrame):
-    def __init__(
-        self, size, skin_file, click_callback, init_rect, init_opacity, isframed
-    ):
-        """
-        size, the size of the puyo view grid (rows, cols).
-        skin_file, the skin image file name the pixel boxes are drawn from.
-        click_callback, the function called during a click event with the position
-            (row, col) of the clicked puyo view used as an argument.
-        init_rect, the initial pixel box for all puyo views (top, left, heigh, width).
-        init_opacity, the initial opacity for all puyo views.
-        isframed, boolean of whether the grid is framed in a box.
-        """
-        super().__init__()
+    clicked = pyqtSignal(tuple)
+
+    def __init__(self, skin, rects, opacities, isframed, parent=None):
+        super().__init__(parent)
 
         if isframed:
             self.setFrameShape(QFrame.Box)
@@ -62,15 +56,13 @@ class PuyoGridView(QFrame):
 
         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
-        for row in range(size[0]):
-            for col in range(size[1]):
-                puyoview = PuyoView(
-                    skin_file,
-                    partial(click_callback, (row, col)),
-                    init_rect,
-                    init_opacity,
-                )
-                layout.addWidget(puyoview, row, col)
+        for row_idx, row in enumerate(rects):
+            for col_idx, rect in enumerate(row):
+                pos = (row_idx, col_idx)
+                opacity = opacities[row_idx][col_idx]
+                puyoview = PuyoView(skin, rect, opacity, parent=self)
+                puyoview.clicked.connect(partial(self.clicked.emit, pos))
+                layout.addWidget(puyoview, *pos)
 
     def setGraphic(self, pos, rect, opacity):
         puyoview = self.layout().itemAtPosition(*pos).widget()
