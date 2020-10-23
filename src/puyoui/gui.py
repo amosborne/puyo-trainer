@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout
 # from PyQt5.QtGui import QPixmap
 # from puyoui.editor import Editor
 from puyoui.puyoview import PuyoView, PuyoGridView
-from puyoui.editorview import DrawpileView
+from puyoui.editorview import PuzzleDefineView
 from puyolib.puyomodel import PuyoPuzzleModel, PuyoGridGraphicsModel
 
 
@@ -17,43 +17,64 @@ def runApp():
     puzzlemodel = PuyoPuzzleModel.new((12, 6), 1)
     graphicsmodel = PuyoGridGraphicsModel("../ppvs2_skins/gummy.png")
 
-    # puyogrid = PuyoGridView(
-    #    graphicsmodel, puzzlemodel.board, puzzlemodel.nhide, isframed=True
-    # )
+    defineview = PuzzleDefineView(
+        graphicsmodel, puzzlemodel.board, puzzlemodel.nhide, puzzlemodel.drawpile
+    )
 
-    # puyogrid.clicked.connect(lambda pos: processClick(puzzlemodel, puyogrid, pos))
-
-    drawpileview = DrawpileView(graphicsmodel, puzzlemodel.drawpile)
-    drawpileview.click_insert.connect(
-        lambda index: insertDrawpile(puzzlemodel, drawpileview, index)
+    defineview.click_drawpile_insert.connect(
+        lambda index: insertDrawpileElem(puzzlemodel, defineview, index)
     )
-    drawpileview.click_delete.connect(
-        lambda index: deleteDrawpile(puzzlemodel, drawpileview, index)
+    defineview.click_drawpile_delete.connect(
+        lambda index: delDrawpileElem(puzzlemodel, defineview, index)
     )
-    drawpileview.click_puyos.connect(
-        lambda pos: changeDrawpile(puzzlemodel, drawpileview, pos)
+    defineview.click_drawpile_puyos.connect(
+        lambda pos: changeDrawpileElem(puzzlemodel, defineview, pos)
     )
+    defineview.click_board_puyos.connect(
+        lambda pos: changeBoardElem(puzzlemodel, defineview, pos)
+    )
+    defineview.click_clear_board.connect(lambda: clearBoard(puzzlemodel, defineview))
+    defineview.click_reset_drawpile.connect(
+        lambda: resetDrawpile(puzzlemodel, defineview)
+    )
+    defineview.click_start.connect(lambda: print("Start"))
 
     layout = QHBoxLayout(widget)
-    layout.addWidget(drawpileview)
+    layout.addWidget(defineview)
 
     win.show()
 
     return app.exec_()
 
 
-def changeDrawpile(model, view, pos):
+def clearBoard(model, view):
+    model.clearBoard()
+    view.setBoardGraphics(model.board)
+
+
+def resetDrawpile(model, view):
+    model.resetDrawpile()
+    view.setDrawpileGraphics(model.drawpile)
+
+
+def changeBoardElem(model, view, pos):
+    puyo = model.board[pos]
+    model.board[pos] = puyo.next()
+    view.setBoardGraphics(model.board)
+
+
+def changeDrawpileElem(model, view, pos):
     puyo = model.drawpile[pos]
     model.drawpile[pos] = puyo.nextColor()
-    view.setGraphics(model.drawpile)
+    view.setDrawpileGraphics(model.drawpile)
 
 
-def insertDrawpile(model, view, index):
+def insertDrawpileElem(model, view, index):
     model.newDrawpileElem(index + 1)
-    view.setGraphics(model.drawpile)
+    view.setDrawpileGraphics(model.drawpile)
 
 
-def deleteDrawpile(model, view, index):
-    if view.count() > 2:
+def delDrawpileElem(model, view, index):
+    if model.drawpile.shape[0] > 2:
         model.delDrawpileElem(index)
-        view.setGraphics(model.drawpile)
+        view.setDrawpileGraphics(model.drawpile)

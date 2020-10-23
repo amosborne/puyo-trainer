@@ -45,6 +45,12 @@ class PuyoPuzzleModel:
         drawpile = np.full((2, 2, 1), Puyo.RED).astype(Puyo)
         return PuyoPuzzleModel(board, nhide, drawpile)
 
+    def clearBoard(self):
+        self.board = np.full(self.board.shape, Puyo.NONE).astype(Puyo)
+
+    def resetDrawpile(self):
+        self.drawpile = np.full((2, 2, 1), Puyo.RED).astype(Puyo)
+
     def newDrawpileElem(self, index):
         self.drawpile = np.insert(
             self.drawpile, index, np.full((2, 1), Puyo.RED).astype(Puyo), axis=0

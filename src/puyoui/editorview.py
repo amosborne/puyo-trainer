@@ -30,10 +30,9 @@ class DrawpileElementView(QHBoxLayout):
     def __init__(self, graphicsmodel, puyogrid, index):
         super().__init__()
 
-        label = QLabel()
+        label = QLabel(str(index))
         label.setFixedWidth(25)
         label.setAlignment(Qt.AlignCenter)
-        label.setText(str(index))
         self.addWidget(label)
 
         puyos = PuyoGridView(graphicsmodel, puyogrid, nhide=0, isframed=True)
@@ -101,5 +100,55 @@ class DrawpileView(QScrollArea):
 
         layout.addStretch()
 
-    def count(self):
-        return self.widget().layout().count() - 1  # minus 1 for stretch element
+
+class PuzzleDefineView(QWidget):
+    click_drawpile_insert = pyqtSignal(int)
+    click_drawpile_delete = pyqtSignal(int)
+    click_drawpile_puyos = pyqtSignal(tuple)
+    click_board_puyos = pyqtSignal(tuple)
+    click_clear_board = pyqtSignal()
+    click_reset_drawpile = pyqtSignal()
+    click_start = pyqtSignal()
+
+    def __init__(self, graphicsmodel, board, nhide, drawpile, parent=None):
+        super().__init__(parent)
+
+        drawpile_view = DrawpileView(graphicsmodel, drawpile)
+        drawpile_view.click_insert.connect(self.click_drawpile_insert)
+        drawpile_view.click_delete.connect(self.click_drawpile_delete)
+        drawpile_view.click_puyos.connect(self.click_drawpile_puyos)
+
+        board_view = PuyoGridView(graphicsmodel, board, nhide, isframed=True)
+        board_view.clicked.connect(self.click_board_puyos)
+
+        sublayout = QVBoxLayout()
+        sublayout.addWidget(board_view)
+
+        clear_button = QPushButton("Clear Board")
+        clear_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
+        clear_button.clicked.connect(self.click_clear_board)
+        sublayout.addWidget(clear_button)
+
+        reset_button = QPushButton("Reset Drawpile")
+        reset_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
+        reset_button.clicked.connect(self.click_reset_drawpile)
+        sublayout.addWidget(reset_button)
+
+        start_button = QPushButton("Start")
+        start_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
+        start_button.setStyleSheet("background-color: green")
+        start_button.clicked.connect(self.click_start)
+        sublayout.addWidget(start_button)
+
+        layout = QHBoxLayout(self)
+        layout.addLayout(sublayout)
+        layout.addWidget(drawpile_view)
+
+        self.drawpile_view = drawpile_view
+        self.board_view = board_view
+
+    def setBoardGraphics(self, board):
+        self.board_view.setGraphics(board)
+
+    def setDrawpileGraphics(self, drawpile):
+        self.drawpile_view.setGraphics(drawpile)
