@@ -55,7 +55,7 @@ class PuyoGridView(QFrame):
 
         for pos, _ in ndenumerate(board):
             rect, opacity = graphicsmodel.graphic(board, nhide, pos)
-            puyoview = PuyoView(graphicsmodel.skin, rect, opacity, parent=self)
+            puyoview = PuyoView(graphicsmodel.skin, rect, opacity)
             puyoview.clicked.connect(partial(self.clicked.emit, pos))
             layout.addWidget(puyoview, *pos)
 

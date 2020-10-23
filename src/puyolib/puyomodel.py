@@ -3,8 +3,8 @@ from collections import namedtuple, defaultdict
 import numpy as np
 
 """
-The module creates a data model for handling puyos.
-The data model maintains a board, a drawpile, and a movelist.
+The module creates data models for handling and displaying puyo
+puzzles.
 """
 
 # An enumeration of the different puyo types.
@@ -33,14 +33,25 @@ class Puyo(Enum):
 
 
 # A data model of a puyo puzzle. Contains a board, drawpile, and movelist.
+# New puyo puzzles start with two elements in the drawpile.
 class PuyoPuzzleModel:
-    def __init__(self, board, nhide):
+    def __init__(self, board, nhide, drawpile):
         self.board = board
         self.nhide = nhide
+        self.drawpile = drawpile
 
     def new(size, nhide):
         board = np.full((size[0] + nhide, size[1]), Puyo.NONE).astype(Puyo)
-        return PuyoPuzzleModel(board, nhide)
+        drawpile = np.full((2, 2, 1), Puyo.RED).astype(Puyo)
+        return PuyoPuzzleModel(board, nhide, drawpile)
+
+    def newDrawpileElem(self, index):
+        self.drawpile = np.insert(
+            self.drawpile, index, np.full((2, 1), Puyo.RED).astype(Puyo), axis=0
+        )
+
+    def delDrawpileElem(self, index):
+        self.drawpile = np.delete(self.drawpile, index, axis=0)
 
 
 # A model for retrieving stationary puyo graphics. Supports PPVS2 skin files.

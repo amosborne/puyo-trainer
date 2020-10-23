@@ -1,6 +1,16 @@
-from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QSizePolicy
+from PyQt5.QtWidgets import (
+    QHBoxLayout,
+    QVBoxLayout,
+    QLabel,
+    QPushButton,
+    QSizePolicy,
+    QScrollArea,
+    QWidget,
+)
 from PyQt5.QtCore import Qt, pyqtSignal
 from puyoui.puyoview import PuyoGridView
+from puyoui.qtutils import deleteItemsOfLayout
+from functools import partial
 
 
 """
@@ -11,19 +21,19 @@ modifying the displayed information as appropriate.
 
 
 # A view of a single drawpile element, including drawpile control buttons.
-# The parent drawpile is responsible for maintaining the correct index.
-# Specify the graphics model and the puyo grid displayed.
+# Specify the graphics model, the puyo grid displayed, and its index.
 class DrawpileElementView(QHBoxLayout):
     click_insert = pyqtSignal()
     click_delete = pyqtSignal()
     click_puyos = pyqtSignal(tuple)
 
-    def __init__(self, graphicsmodel, puyogrid, parent=None):
-        super().__init__(parent)
+    def __init__(self, graphicsmodel, puyogrid, index):
+        super().__init__()
 
         label = QLabel()
         label.setFixedWidth(25)
         label.setAlignment(Qt.AlignCenter)
+        label.setText(str(index))
         self.addWidget(label)
 
         puyos = PuyoGridView(graphicsmodel, puyogrid, nhide=0, isframed=True)
@@ -47,9 +57,49 @@ class DrawpileElementView(QHBoxLayout):
 
         self.addLayout(button_layout)
 
-    def setIndex(self, index):
-        self.itemAt(0).widget().setText(str(index))
 
-    def setGraphics(self, puyogrid):
-        puyos = self.itemAt(1).widget()
-        puyos.setGraphics(puyogrid)
+# A scrollable list of drawpile elements.
+# When the controller sets the drawpile graphics, all widgets are reconstructed.
+class DrawpileView(QScrollArea):
+    click_insert = pyqtSignal(int)
+    click_delete = pyqtSignal(int)
+    click_puyos = pyqtSignal(tuple)
+
+    def __init__(self, graphicsmodel, drawpile, parent=None):
+        super().__init__(parent)
+
+        self.graphicsmodel = graphicsmodel
+
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        self.setWidget(widget)
+
+        self.setGraphics(drawpile)
+
+        self.setMinimumWidth(
+            layout.sizeHint().width()
+            + 2 * self.frameWidth()
+            + self.verticalScrollBar().sizeHint().width()
+        )
+
+        self.setWidgetResizable(True)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+
+    def setGraphics(self, drawpile):
+        layout = self.widget().layout()
+        deleteItemsOfLayout(layout)
+
+        for index, puyos in enumerate(drawpile):
+            drawpile_elem = DrawpileElementView(self.graphicsmodel, puyos, index + 1)
+            drawpile_elem.click_insert.connect(partial(self.click_insert.emit, index))
+            drawpile_elem.click_delete.connect(partial(self.click_delete.emit, index))
+            drawpile_elem.click_puyos.connect(
+                lambda pos, index=index: self.click_puyos.emit((index, *pos))
+            )
+            layout.addLayout(drawpile_elem)
+
+        layout.addStretch()
+
+    def count(self):
+        return self.widget().layout().count() - 1  # minus 1 for stretch element
