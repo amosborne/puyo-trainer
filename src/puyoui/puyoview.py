@@ -2,12 +2,12 @@ from PyQt5.QtWidgets import QAbstractButton, QFrame, QGridLayout, QSizePolicy
 from PyQt5.QtGui import QPixmap, QPainter
 from PyQt5.QtCore import QRect, Qt, pyqtSignal
 from functools import partial
-import numpy as np
+from numpy import ndenumerate
 
 """
 This module creates UI elements for viewing puyo graphics on a grid.
-The view controller is responsible for specifying the graphics displayed.
-The view controller may connect to the view to detect click events.
+The view controller is responsible for connecting to click events and
+modifying the displayed information as appropriate.
 """
 
 # A view of a single, clickable puyo.
@@ -53,7 +53,7 @@ class PuyoGridView(QFrame):
 
         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
-        for pos, _ in np.ndenumerate(board):
+        for pos, _ in ndenumerate(board):
             rect, opacity = graphicsmodel.graphic(board, nhide, pos)
             puyoview = PuyoView(graphicsmodel.skin, rect, opacity, parent=self)
             puyoview.clicked.connect(partial(self.clicked.emit, pos))
@@ -63,7 +63,7 @@ class PuyoGridView(QFrame):
         self.nhide = nhide
 
     def setGraphics(self, board):
-        for pos, _ in np.ndenumerate(board):
+        for pos, _ in ndenumerate(board):
             rect, opacity = self.graphicsmodel.graphic(board, self.nhide, pos)
             puyoview = self.layout().itemAtPosition(*pos).widget()
             puyoview.setGraphic(rect, opacity)

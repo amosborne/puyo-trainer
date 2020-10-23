@@ -14,17 +14,23 @@ def runApp():
     widget = QWidget()
     win.setCentralWidget(widget)
 
-    puzzlemodel = PuyoPuzzleModel.new((12, 6), 1)
+    # puzzlemodel = PuyoPuzzleModel.new((12, 6), 1)
     graphicsmodel = PuyoGridGraphicsModel("../ppvs2_skins/gummy.png")
 
-    puyogrid = PuyoGridView(
-        graphicsmodel, puzzlemodel.board, puzzlemodel.nhide, isframed=True
+    # puyogrid = PuyoGridView(
+    #    graphicsmodel, puzzlemodel.board, puzzlemodel.nhide, isframed=True
+    # )
+
+    # puyogrid.clicked.connect(lambda pos: processClick(puzzlemodel, puyogrid, pos))
+
+    grid = PuyoPuzzleModel.new((2, 1), 0)
+
+    drawpile_elem = DrawpileElementView(graphicsmodel, grid.board, parent=widget)
+    drawpile_elem.click_insert.connect(lambda: print("insert"))
+    drawpile_elem.click_delete.connect(lambda: print("delete"))
+    drawpile_elem.click_puyos.connect(
+        lambda pos: processClick(grid, drawpile_elem, pos)
     )
-
-    puyogrid.clicked.connect(lambda pos: processClick(puzzlemodel, puyogrid, pos))
-
-    layout = QVBoxLayout(widget)
-    layout.addWidget(puyogrid)
 
     win.show()
 
@@ -35,3 +41,4 @@ def processClick(model, view, pos):
     puyo = model.board[pos]
     model.board[pos] = puyo.next()
     view.setGraphics(model.board)
+    view.setIndex(2)
