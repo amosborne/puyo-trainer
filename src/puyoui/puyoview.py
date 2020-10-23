@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QAbstractButton, QFrame, QGridLayout, QSizePolicy
 from PyQt5.QtGui import QPixmap, QPainter
 from PyQt5.QtCore import QRect, Qt, pyqtSignal
 from functools import partial
+import numpy as np
 
 """
 This module creates UI elements for viewing puyo graphics on a grid.
@@ -33,11 +34,11 @@ class PuyoView(QAbstractButton):
 
 
 # A view of a grid of clickable puyos. May or may not be framed.
-# Specify the graphics by skin file, pixel rectangles, and opacities.
+# Specify the graphics model, the board displayed, and quantity of hidden rows.
 class PuyoGridView(QFrame):
     clicked = pyqtSignal(tuple)
 
-    def __init__(self, skin, rects, opacities, isframed, parent=None):
+    def __init__(self, graphicsmodel, board, nhide, isframed, parent=None):
         super().__init__(parent)
 
         if isframed:
@@ -52,21 +53,17 @@ class PuyoGridView(QFrame):
 
         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
-        for row_idx, row in enumerate(rects):
-            for col_idx, rect in enumerate(row):
-                pos = (row_idx, col_idx)
-                opacity = opacities[row_idx][col_idx]
-                puyoview = PuyoView(skin, rect, opacity, parent=self)
-                puyoview.clicked.connect(partial(self.clicked.emit, pos))
-                layout.addWidget(puyoview, *pos)
+        for pos, _ in np.ndenumerate(board):
+            rect, opacity = graphicsmodel.graphic(board, nhide, pos)
+            puyoview = PuyoView(graphicsmodel.skin, rect, opacity, parent=self)
+            puyoview.clicked.connect(partial(self.clicked.emit, pos))
+            layout.addWidget(puyoview, *pos)
 
-    def setGraphic(self, pos, rect, opacity):
-        puyoview = self.layout().itemAtPosition(*pos).widget()
-        puyoview.setGraphic(rect, opacity)
+        self.graphicsmodel = graphicsmodel
+        self.nhide = nhide
 
-    def setGraphics(self, rects, opacities):
-        for row_idx, row in enumerate(rects):
-            for col_idx, rect in enumerate(row):
-                pos = (row_idx, col_idx)
-                opacity = opacities[row_idx][col_idx]
-                self.setGraphic(pos, rect, opacity)
+    def setGraphics(self, board):
+        for pos, _ in np.ndenumerate(board):
+            rect, opacity = self.graphicsmodel.graphic(board, self.nhide, pos)
+            puyoview = self.layout().itemAtPosition(*pos).widget()
+            puyoview.setGraphic(rect, opacity)

@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout
 # from puyoui.editor import Editor
 from puyoui.puyoview import PuyoView, PuyoGridView
 from puyoui.editorview import DrawpileElementView
-from puyolib.puyomodel import PuyoPuzzleModel
+from puyolib.puyomodel import PuyoPuzzleModel, PuyoGridGraphicsModel
 
 
 def runApp():
@@ -14,21 +14,24 @@ def runApp():
     widget = QWidget()
     win.setCentralWidget(widget)
 
+    puzzlemodel = PuyoPuzzleModel.new((12, 6), 1)
+    graphicsmodel = PuyoGridGraphicsModel("../ppvs2_skins/gummy.png")
+
     puyogrid = PuyoGridView(
-        skin="../ppvs2_skins/gummy.png",
-        rects=[[(0, 0, 32, 32) for _ in range(6)] for _ in range(13)],
-        opacities=[[1 for _ in range(6)] for _ in range(13)],
-        isframed=True,
+        graphicsmodel, puzzlemodel.board, puzzlemodel.nhide, isframed=True
     )
 
-    puyogrid.clicked.connect(lambda x: print(x))
+    puyogrid.clicked.connect(lambda pos: processClick(puzzlemodel, puyogrid, pos))
 
     layout = QVBoxLayout(widget)
     layout.addWidget(puyogrid)
 
     win.show()
 
-    pz = PuyoPuzzleModel.new(13, 6)
-    puyogrid.setGraphics(*pz.getBoardGraphics())
-
     return app.exec_()
+
+
+def processClick(model, view, pos):
+    puyo = model.board[pos]
+    model.board[pos] = puyo.next()
+    view.setGraphics(model.board)
