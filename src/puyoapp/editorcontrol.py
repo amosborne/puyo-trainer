@@ -5,6 +5,10 @@ class EditorController:
     def __init__(self, puzzlemodel, editorview):
         editorview.show()
 
+        self.gamecontrol = GameplayController(
+            puzzlemodel, editorview.solverview.gameplayview
+        )
+
         self.puzzlemodel = puzzlemodel
         self.editorview = editorview
         self.bindDefineView()
@@ -43,7 +47,6 @@ class EditorController:
 
         def startSolution():
             self.editorview.centralWidget().setCurrentWidget(self.editorview.solverview)
-            GameplayController(model, self.editorview.solverview.gameplayview)
 
         view.click_board_puyos.connect(changeBoardElem)
         view.click_drawpile_puyos.connect(changeDrawpileElem)

@@ -1,6 +1,6 @@
 from collections import namedtuple, defaultdict
-from puyomodel import Puyo, Direc
-from puyogridmodel import adjacency_direction, AbstractPuyoGridModel
+from puyolib.puyomodel import Puyo, Direc
+from puyolib.puyogridmodel import adjacency_direction
 
 
 # An abstraction layer between a grid of puyos and their graphical presentation.
@@ -27,6 +27,8 @@ class PuyoGraphicModel:
                 north, south, east, west = (False, False, False, False)
                 if not self.gridmodel.isHidden(elem.pos):
                     for adj in adj_set:
+                        if self.gridmodel.isHidden(adj.pos):
+                            continue
                         direc = adjacency_direction(elem.pos, adj.pos)
                         north = True if direc is Direc.NORTH else north
                         south = True if direc is Direc.SOUTH else south
@@ -42,10 +44,10 @@ class PuyoGraphicModel:
             else:
                 opacity = 1
 
-            yield Graphic(rect, opacity)
+            yield Graphic(elem.pos, rect, opacity)
 
 
-Graphic = namedtuple("Graphic", "rect, opacity")
+Graphic = namedtuple("Graphic", "pos, rect, opacity")
 
 AdjMatch = namedtuple("AdjMatch", "north, south, east, west")
 

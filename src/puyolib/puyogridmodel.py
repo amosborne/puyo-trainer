@@ -1,7 +1,11 @@
 import numpy as np
+from collections import namedtuple
 from copy import deepcopy
 from pandas import DataFrame
-from puyomodel import Puyo, Direc
+from puyolib.puyomodel import Puyo, Direc
+
+
+PuyoGridElem = namedtuple("PuyoGridElem", "pos, puyo")
 
 
 # A class structure for controlling and interrogating a grid of puyos.
@@ -12,7 +16,7 @@ class AbstractPuyoGridModel:
         self.nhide = nhide
 
     def __iter__(self):
-        return ((pos, puyo) for (pos, puyo) in np.ndenumerate(self.board))
+        return (PuyoGridElem(pos, puyo) for (pos, puyo) in np.ndenumerate(self.board))
 
     def __getitem__(self, key):
         return self.board[key]
@@ -41,10 +45,10 @@ class AbstractPuyoGridModel:
     def __sub__(self, other):
         delta = set()
 
-        for pos, puyo in self:
-            other_puyo = other[pos]
-            if puyo is not Puyo.NONE and other_puyo is Puyo.NONE:
-                delta.add((pos, puyo))
+        for elem in self:
+            other_puyo = other[elem.pos]
+            if elem.puyo is not Puyo.NONE and other_puyo is Puyo.NONE:
+                delta.add(elem)
 
         return delta
 
@@ -52,14 +56,14 @@ class AbstractPuyoGridModel:
         return deepcopy(self)
 
     def isHidden(self, key):
-        return key[0] >= self.board.shape[0] - self.nhide - 1
+        return key[0] >= self.board.shape[0] - self.nhide
 
     def getAdjacent(self, key):
         adj = set()
 
-        for pos, puyo in self:
-            if puyo is not Puyo.NONE and adjacency_direction(key, pos):
-                adj.add((pos, puyo))
+        for elem in self:
+            if elem.puyo is not Puyo.NONE and adjacency_direction(key, elem.pos):
+                adj.add(elem)
 
         return adj
 
