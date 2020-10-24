@@ -1,3 +1,6 @@
+from puyoapp.gameplaycontrol import GameplayController
+
+
 class EditorController:
     def __init__(self, puzzlemodel, editorview):
         editorview.show()
@@ -5,6 +8,7 @@ class EditorController:
         self.puzzlemodel = puzzlemodel
         self.editorview = editorview
         self.bindDefineView()
+        self.bindSolverView()
 
     def bindDefineView(self):
         model = self.puzzlemodel
@@ -39,6 +43,7 @@ class EditorController:
 
         def startSolution():
             self.editorview.centralWidget().setCurrentWidget(self.editorview.solverview)
+            GameplayController(model, self.editorview.solverview.gameplayview)
 
         view.click_board_puyos.connect(changeBoardElem)
         view.click_drawpile_puyos.connect(changeDrawpileElem)
@@ -47,3 +52,13 @@ class EditorController:
         view.click_reset_drawpile.connect(resetDrawpile)
         view.click_clear_board.connect(clearBoard)
         view.click_start.connect(startSolution)
+
+    def bindSolverView(self):
+        model = self.puzzlemodel
+        view = self.editorview.solverview
+
+        def exitSolver():
+            self.editorview.centralWidget().setCurrentWidget(self.editorview.defineview)
+
+        view.back_button.clicked.connect(exitSolver)
+        view.save_button.clicked.connect(lambda: print("save and exit!"))

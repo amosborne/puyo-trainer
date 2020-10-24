@@ -159,30 +159,30 @@ class PuzzleDefineView(QWidget):
 
 
 class PuzzleSolveView(QWidget):
-    def __init__(self, graphicsmodel, board, nhide, drawpile, npreview, parent=None):
+    def __init__(self, graphicsmodel, board, nhide, drawpile, parent=None):
         super().__init__(parent)
 
+        self.gameplayview = GameplayView(graphicsmodel, board, nhide, drawpile)
+
         layout = QVBoxLayout(self)
-        layout.addWidget(GameplayView(graphicsmodel, board, nhide, drawpile, npreview))
+        layout.addWidget(self.gameplayview)
 
-        back_button = QPushButton("Go Back")
-        back_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
-        layout.addWidget(back_button)
+        self.back_button = QPushButton("Go Back")
+        self.back_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
+        layout.addWidget(self.back_button)
 
-        save_button = QPushButton("Save and Exit")
-        save_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
-        save_button.setStyleSheet("background-color: green")
-        layout.addWidget(save_button)
+        self.save_button = QPushButton("Save and Exit")
+        self.save_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.save_button.setStyleSheet("background-color: green")
+        layout.addWidget(self.save_button)
 
 
 class EditorView(QMainWindow):
-    def __init__(self, graphicsmodel, board, nhide, drawpile, npreview, parent=None):
+    def __init__(self, graphicsmodel, board, nhide, drawpile, parent=None):
         super().__init__(parent)
 
         self.defineview = PuzzleDefineView(graphicsmodel, board, nhide, drawpile)
-        self.solverview = PuzzleSolveView(
-            graphicsmodel, board, nhide, drawpile, npreview
-        )
+        self.solverview = PuzzleSolveView(graphicsmodel, board, nhide, drawpile)
 
         self.setCentralWidget(QStackedWidget())
         self.centralWidget().addWidget(self.defineview)

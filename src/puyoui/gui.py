@@ -11,9 +11,7 @@ def runApp():
     graphics = PuyoGridGraphicsModel("../ppvs2_skins/gummy.png")
 
     puzzle = PuyoPuzzleModel.new((12, 6), 1)
-    editor_window = EditorView(
-        graphics, puzzle.board, puzzle.nhide, puzzle.drawpile, npreview=2
-    )
+    editor_window = EditorView(graphics, puzzle.board, puzzle.nhide, puzzle.drawpile)
 
     win = EditorController(puzzle, editor_window)
 
