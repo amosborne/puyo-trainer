@@ -37,10 +37,13 @@ class EditorController:
                 model.delDrawpileElem(index)
                 view.setDrawpileGraphics(model.drawpile)
 
+        def startSolution():
+            self.editorview.centralWidget().setCurrentWidget(self.editorview.solverview)
+
         view.click_board_puyos.connect(changeBoardElem)
         view.click_drawpile_puyos.connect(changeDrawpileElem)
         view.click_drawpile_insert.connect(insertDrawpileElem)
         view.click_drawpile_delete.connect(delDrawpileElem)
         view.click_reset_drawpile.connect(resetDrawpile)
         view.click_clear_board.connect(clearBoard)
-        view.click_start.connect(lambda: print("Start"))  # placeholder
+        view.click_start.connect(startSolution)

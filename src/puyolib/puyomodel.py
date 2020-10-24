@@ -32,6 +32,31 @@ class Puyo(Enum):
         return puyo
 
 
+class Direc(Enum):
+    NORTH = auto()
+    SOUTH = auto()
+    EAST = auto()
+    WEST = auto()
+
+
+# A puyo move is defined by the column the first puyo is located in
+# combined with the orientation which points the second puyo.
+Move = namedtuple("Move", ["puyos", "col", "direc"])
+
+
+def move2hovergrid(size, move=None):
+    hovergrid = np.full(size, Puyo.NONE).astype(Puyo)
+    if move is None:
+        return hovergrid
+
+    puyos = move.puyos.copy()
+    if move.direc is Direc.SOUTH:
+        hovergrid[
+            -1 : -1 - puyos.shape[0], move.col : move.col + puyos.shape[1]
+        ] = puyos
+    return hovergrid
+
+
 # A data model of a puyo puzzle. Contains a board, drawpile, and movelist.
 # New puyo puzzles start with two elements in the drawpile.
 class PuyoPuzzleModel:

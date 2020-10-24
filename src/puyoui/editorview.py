@@ -11,6 +11,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt, pyqtSignal
 from puyoui.puyoview import PuyoGridView
+from puyoui.gameview import GameplayView
 from puyoui.qtutils import deleteItemsOfLayout
 from functools import partial
 
@@ -157,12 +158,31 @@ class PuzzleDefineView(QWidget):
         self.drawpile_view.setGraphics(drawpile)
 
 
+class PuzzleSolveView(QWidget):
+    def __init__(self, graphicsmodel, board, nhide, drawpile, npreview, parent=None):
+        super().__init__(parent)
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(GameplayView(graphicsmodel, board, nhide, drawpile, npreview))
+
+        back_button = QPushButton("Go Back")
+        back_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
+        layout.addWidget(back_button)
+
+        save_button = QPushButton("Save and Exit")
+        save_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
+        save_button.setStyleSheet("background-color: green")
+        layout.addWidget(save_button)
+
+
 class EditorView(QMainWindow):
-    def __init__(self, graphicsmodel, board, nhide, drawpile, parent=None):
+    def __init__(self, graphicsmodel, board, nhide, drawpile, npreview, parent=None):
         super().__init__(parent)
 
         self.defineview = PuzzleDefineView(graphicsmodel, board, nhide, drawpile)
-        self.solverview = QWidget()  # placeholder
+        self.solverview = PuzzleSolveView(
+            graphicsmodel, board, nhide, drawpile, npreview
+        )
 
         self.setCentralWidget(QStackedWidget())
         self.centralWidget().addWidget(self.defineview)
