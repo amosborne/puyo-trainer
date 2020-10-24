@@ -6,6 +6,8 @@ from PyQt5.QtWidgets import (
     QSizePolicy,
     QScrollArea,
     QWidget,
+    QMainWindow,
+    QStackedWidget,
 )
 from PyQt5.QtCore import Qt, pyqtSignal
 from puyoui.puyoview import PuyoGridView
@@ -101,6 +103,7 @@ class DrawpileView(QScrollArea):
         layout.addStretch()
 
 
+# The first of two stacked widgets in the editor, this window defines the puzzle.
 class PuzzleDefineView(QWidget):
     click_drawpile_insert = pyqtSignal(int)
     click_drawpile_delete = pyqtSignal(int)
@@ -152,3 +155,15 @@ class PuzzleDefineView(QWidget):
 
     def setDrawpileGraphics(self, drawpile):
         self.drawpile_view.setGraphics(drawpile)
+
+
+class EditorView(QMainWindow):
+    def __init__(self, graphicsmodel, board, nhide, drawpile, parent=None):
+        super().__init__(parent)
+
+        self.defineview = PuzzleDefineView(graphicsmodel, board, nhide, drawpile)
+        self.solverview = QWidget()  # placeholder
+
+        self.setCentralWidget(QStackedWidget())
+        self.centralWidget().addWidget(self.defineview)
+        self.centralWidget().addWidget(self.solverview)
