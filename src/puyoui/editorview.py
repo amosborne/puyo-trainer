@@ -71,34 +71,32 @@ class DrawpileView(QScrollArea):
 
     def __init__(self, drawpile, parent=None):
         super().__init__(parent)
-
-        widget = QWidget()
-        self.layout = QVBoxLayout(widget)
-        self.setWidget(widget)
-
         self.drawpile = drawpile
-        self.updateView()
-
-        self.setMinimumWidth(
-            self.layout.sizeHint().width()
-            + 2 * self.frameWidth()
-            + self.verticalScrollBar().sizeHint().width()
-        )
-
-        self.setWidgetResizable(True)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.setWidgetResizable(True)
 
     def updateView(self):
-        deleteItemsOfLayout(self.layout)
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+
         for index, graphicmodel in enumerate(self.drawpile):
             elem = DrawpileElementView(graphicmodel, index)
             elem.click_insert.connect(self.click_insert.emit)
             elem.click_delete.connect(self.click_delete.emit)
             elem.click_puyos.connect(self.click_puyos)
-            self.layout.addLayout(elem)
+            layout.addLayout(elem)
 
-        self.layout.addStretch()
+        layout.addStretch()
+
+        self.setMinimumWidth(
+            layout.sizeHint().width()
+            + 2 * self.frameWidth()
+            + self.verticalScrollBar().sizeHint().width()
+        )
+
+        self.setWidget(widget)
+        self.show()
 
 
 # The first of two stacked widgets in the editor, this window defines the puzzle.

@@ -6,59 +6,61 @@ from puyoui.editorview import EditorView  # view
 # Manages view callbacks and keeps the model and view synchronized.
 class EditorVC:
     def __init__(self, puzzlemodel, skin):
-
         # Initialize the editor view with direct access to the graphic models.
         board_graphic = PuyoGraphicModel(skin, puzzlemodel.board)
         drawpile_graphics = []
-        for elem in puzzlemodel.drawpile:
-            elem_graphic = PuyoGraphicModel(skin, elem)
-            drawpile_graphics.append(elem_graphic)
 
         self.skin = skin
+        self.model = puzzlemodel
         self.view = EditorView(board_graphic, drawpile_graphics)
-        self.puzzlemodel = puzzlemodel
 
         # Bind all the GUI callbacks.
         self.bindDefineView()
 
-    def insertDrawpileElement(self, index):
-        pass
-
     def bindDefineView(self):
-        model = self.puzzlemodel
+        model = self.model
         view = self.view.defineview
 
-        def clearBoard():
-            model.board.reset()
-            view.updateView()
+        def updateView(func):
+            def decorated(*args):
+                func(*args)
+                view.updateView()
 
-        def resetDrawpile():
-            for elem in model.drawpile:
-                elem.reset()
-            view.updateView()
+            return decorated
 
+        @updateView
         def changeBoardElem(pos):
             model.board[pos] = model.board[pos].next()
-            view.updateView()
 
+        @updateView
         def changeDrawpileElem(idx_pos):
             index, pos = idx_pos
             model.drawpile[index][pos] = model.drawpile[index][pos].next()
-            view.updateView()
 
-        def insertDrawpileElem(index):
+        @updateView
+        def insertDrawpileElem(index=-1):
             elem = model.newDrawpileElem(index + 1)
             view.drawpile.insert(index + 1, PuyoGraphicModel(self.skin, elem))
-            view.updateView()
 
+        @updateView
         def deleteDrawpileElem(index):
             if len(model.drawpile) > 2:
                 del model.drawpile[index]
                 del view.drawpile[index]
-                view.updateView()
+
+        @updateView
+        def clearBoard():
+            model.board.reset()
+
+        def resetDrawpile():
+            del view.drawpile[:]
+            insertDrawpileElem()
+            insertDrawpileElem()
 
         def startSolution():
             self.editorview.centralWidget().setCurrentWidget(self.editorview.solverview)
+
+        resetDrawpile()
 
         view.click_board_puyos.connect(changeBoardElem)
         view.click_drawpile_puyos.connect(changeDrawpileElem)

@@ -7,9 +7,6 @@ class PuzzleModel:
         self.drawpile = []
         self.drawpile_elem_size = drawpile_elem_size
 
-        self.newDrawpileElem()
-        self.newDrawpileElem()
-
     def newDrawpileElem(self, index=0):
         elem = PuyoDrawpileElemModel(self.drawpile_elem_size)
         self.drawpile.insert(index, elem)
