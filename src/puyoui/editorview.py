@@ -12,7 +12,6 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, pyqtSignal
 from puyoui.puyoview import PuyoGridView
 from puyoui.gameview import GameplayView
-from puyoui.qtutils import deleteItemsOfLayout
 
 
 """
@@ -75,6 +74,7 @@ class DrawpileView(QScrollArea):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.setWidgetResizable(True)
+        self.updateView()
 
     def updateView(self):
         widget = QWidget()
@@ -153,35 +153,37 @@ class PuzzleDefineView(QWidget):
         self.board_view.updateView()
 
 
-# class PuzzleSolveView(QWidget):
-#     def __init__(self, graphicsmodel, board, nhide, drawpile, parent=None):
-#         super().__init__(parent)
+class PuzzleSolveView(QWidget):
+    click_back = pyqtSignal()
+    click_save = pyqtSignal()
 
-#         self.gameplayview = GameplayView(graphicsmodel, board, nhide, drawpile)
+    def __init__(self, board, drawpile, hoverarea, parent=None):
+        super().__init__(parent)
 
-#         layout = QVBoxLayout(self)
-#         layout.addWidget(self.gameplayview)
+        self.gameplayview = GameplayView(board, drawpile, hoverarea, draw_index=0)
 
-#         self.back_button = QPushButton("Go Back")
-#         self.back_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
-#         layout.addWidget(self.back_button)
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.gameplayview)
 
-#         self.save_button = QPushButton("Save and Exit")
-#         self.save_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
-#         self.save_button.setStyleSheet("background-color: green")
-#         layout.addWidget(self.save_button)
+        back_button = QPushButton("Go Back")
+        back_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
+        back_button.clicked.connect(self.click_back)
+        layout.addWidget(back_button)
 
-#     def updateView(self):
-#         pass
+        save_button = QPushButton("Save and Exit")
+        save_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
+        save_button.setStyleSheet("background-color: green")
+        save_button.clicked.connect(self.click_save)
+        layout.addWidget(save_button)
 
 
 class EditorView(QMainWindow):
-    def __init__(self, board, drawpile, parent=None):
+    def __init__(self, board, drawpile, hoverarea, parent=None):
         super().__init__(parent)
 
         self.defineview = PuzzleDefineView(board, drawpile)
-        # self.solverview = PuzzleSolveView(graphicsmodel, board, nhide, drawpile)
+        self.solverview = PuzzleSolveView(board, drawpile, hoverarea)
 
         self.setCentralWidget(QStackedWidget())
         self.centralWidget().addWidget(self.defineview)
-        # self.centralWidget().addWidget(self.solverview)
+        self.centralWidget().addWidget(self.solverview)

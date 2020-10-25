@@ -10,7 +10,7 @@ def runApp():
     skin = "../ppvs2_skins/gummy.png"
 
     puzzlemodel = PuzzleModel(
-        board_size=(12, 6), board_nhide=1, drawpile_elem_size=(3, 3)
+        board_size=(12, 6), board_nhide=1, drawpile_elem_size=(3, 2)
     )
 
     editor = EditorVC(puzzlemodel, skin)

@@ -13,6 +13,7 @@ class AbstractPuyoGridModel:
     def __init__(self, size, nhide):
         fullsize = (size[0] + nhide, size[1])
         self.board = np.empty(fullsize).astype(Puyo)
+        self.shape = self.board.shape
         self.reset()
         self.nhide = nhide
 
@@ -39,22 +40,22 @@ class AbstractPuyoGridModel:
 
         return dataframe.__str__()
 
-    # Subtraction of two puyo grid models (assuming the same full size)
-    # returns the set of (pos, puyo) for which self has a puyo and other
-    # does not. This is primarily intended for determining ghost puyo
-    # locations given a post-move and pre-move puyo board model.
-    def __sub__(self, other):
-        delta = set()
+    # # Subtraction of two puyo grid models (assuming the same full size)
+    # # returns the set of (pos, puyo) for which self has a puyo and other
+    # # does not. This is primarily intended for determining ghost puyo
+    # # locations given a post-move and pre-move puyo board model.
+    # def __sub__(self, other):
+    #     delta = set()
 
-        for elem in self:
-            other_puyo = other[elem.pos]
-            if elem.puyo is not Puyo.NONE and other_puyo is Puyo.NONE:
-                delta.add(elem)
+    #     for elem in self:
+    #         other_puyo = other[elem.pos]
+    #         if elem.puyo is not Puyo.NONE and other_puyo is Puyo.NONE:
+    #             delta.add(elem)
 
-        return delta
+    #     return delta
 
-    def copy(self):
-        return deepcopy(self)
+    # def copy(self):
+    #     return deepcopy(self)
 
     def reset(self):
         self[:] = Puyo.NONE
@@ -100,7 +101,9 @@ class PuyoDrawpileElemModel(AbstractPuyoGridModel):
 
 
 class PuyoHoverAreaModel(AbstractPuyoGridModel):
-    pass
+    def __init__(self, board, drawpile_elem):
+        size = (2 * drawpile_elem.shape[0] - 1, board.shape[1])
+        super().__init__(size, nhide=0)
 
 
 def adjacency_direction(pos1, pos2):

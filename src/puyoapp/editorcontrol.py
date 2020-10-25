@@ -1,3 +1,4 @@
+from puyolib.puyogridmodel import PuyoHoverAreaModel  # model
 from puyolib.puyographicmodel import PuyoGraphicModel  # model
 from puyoui.editorview import EditorView  # view
 
@@ -6,15 +7,18 @@ from puyoui.editorview import EditorView  # view
 # Manages view callbacks and keeps the model and view synchronized.
 class EditorVC:
     def __init__(self, puzzlemodel, skin):
-        # Initialize the editor view with direct access to the graphic models.
         board_graphic = PuyoGraphicModel(skin, puzzlemodel.board)
         drawpile_graphics = []
 
+        elem = puzzlemodel.newDrawpileElem()  # hack
+
+        self.hoverarea = PuyoHoverAreaModel(puzzlemodel.board, elem)
+        hoverarea_graphics = PuyoGraphicModel(skin, self.hoverarea)
+
+        self.view = EditorView(board_graphic, drawpile_graphics, hoverarea_graphics)
+
         self.skin = skin
         self.model = puzzlemodel
-        self.view = EditorView(board_graphic, drawpile_graphics)
-
-        # Bind all the GUI callbacks.
         self.bindDefineView()
 
     def bindDefineView(self):
@@ -53,6 +57,7 @@ class EditorVC:
             model.board.reset()
 
         def resetDrawpile():
+            del model.drawpile[:]
             del view.drawpile[:]
             insertDrawpileElem()
             insertDrawpileElem()
