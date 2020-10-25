@@ -35,7 +35,7 @@ class PuyoView(QAbstractButton):
 
 
 # A view of a grid of clickable puyos. May or may not be framed.
-# Specify the graphics model, the board displayed, and quantity of hidden rows.
+# Specify the graphic model to be interrogated on update.
 class PuyoGridView(QFrame):
     clicked = pyqtSignal(tuple)
 

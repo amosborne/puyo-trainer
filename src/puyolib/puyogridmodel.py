@@ -12,7 +12,8 @@ PuyoGridElem = namedtuple("PuyoGridElem", "pos, puyo")
 class AbstractPuyoGridModel:
     def __init__(self, size, nhide):
         fullsize = (size[0] + nhide, size[1])
-        self.board = np.full(fullsize, Puyo.NONE).astype(Puyo)
+        self.board = np.empty(fullsize).astype(Puyo)
+        self.reset()
         self.nhide = nhide
 
     def __iter__(self):
@@ -55,6 +56,9 @@ class AbstractPuyoGridModel:
     def copy(self):
         return deepcopy(self)
 
+    def reset(self):
+        self.board[:] = Puyo.NONE
+
     def isHidden(self, key):
         return key[0] >= self.board.shape[0] - self.nhide
 
@@ -71,6 +75,15 @@ class AbstractPuyoGridModel:
 class PuyoBoardModel(AbstractPuyoGridModel):
     def applyMove(move):
         pass
+
+
+class PuyoDrawpileElemModel(AbstractPuyoGridModel):
+    def __init__(self, size):
+        super().__init__(size, nhide=0)
+
+
+class PuyoHoverAreaModel(AbstractPuyoGridModel):
+    pass
 
 
 def adjacency_direction(pos1, pos2):

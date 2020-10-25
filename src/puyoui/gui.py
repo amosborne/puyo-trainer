@@ -1,37 +1,20 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow
-from puyoui.puyoview import PuyoGridView
-from puyolib.puyogridmodel import AbstractPuyoGridModel
-from puyolib.puyographicmodel import PuyoGraphicModel
-
-from puyolib.puyomodel import Puyo
-
-# from puyoui.editorview import EditorView
-# from puyolib.puyomodel import PuyoPuzzleModel, PuyoGridGraphicsModel
-# from puyoapp.editorcontrol import EditorController
+from PyQt5.QtWidgets import QApplication
+from puyolib.puzzlemodel import PuzzleModel  # model
+from puyoapp.editorcontrol import EditorVC  # view-controller
 
 
 def runApp():
 
     app = QApplication([])
 
-    win = QMainWindow()
+    skin = "../ppvs2_skins/gummy.png"
 
-    boardmodel = AbstractPuyoGridModel((12, 6), 1)
-    boardmodel[:, 2] = Puyo.RED
-    boardmodel[4, :] = Puyo.BLUE
-    graphicmodel = PuyoGraphicModel("../ppvs2_skins/gummy.png", boardmodel)
-    boardview = PuyoGridView(graphicmodel, isframed=True)
+    puzzlemodel = PuzzleModel(
+        board_size=(12, 6), board_nhide=1, drawpile_elem_size=(3, 3)
+    )
 
-    win.setCentralWidget(boardview)
-    win.show()
+    editor = EditorVC(puzzlemodel, skin)
 
-    boardmodel[6, :] = Puyo.GREEN
-    boardview.updateView()
-    # graphics = PuyoGridGraphicsModel("../ppvs2_skins/gummy.png")
-
-    # puzzle = PuyoPuzzleModel.new((12, 6), 1)
-    # editor_window = EditorView(graphics, puzzle.board, puzzle.nhide, puzzle.drawpile)
-
-    # win = EditorController(puzzle, editor_window)
+    editor.view.show()
 
     return app.exec_()

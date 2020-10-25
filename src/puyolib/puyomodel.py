@@ -7,8 +7,30 @@ The module creates data models for handling and displaying puyo
 puzzles.
 """
 
+# An enum class which can cycle amongst its members.
+class EnumCycle(Enum):
+    def _next(self, k):
+        cls = self.__class__
+        members = list(cls)
+        index = members.index(self) + k
+        if index >= len(members):
+            index = 0
+        elif index < 0:
+            index = len(members) - 1
+        return members[index]
+
+    def next(self, cond=lambda _: True, k=1):
+        enum = self._next(k)
+        while not cond(enum):
+            enum = enum._next(k)
+        return enum
+
+    def prev(self, cond=lambda _: True):
+        return self.next(cond, k=-1)
+
+
 # An enumeration of the different puyo types.
-class Puyo(Enum):
+class Puyo(EnumCycle):
     NONE = auto()
     RED = auto()
     GREEN = auto()
@@ -17,19 +39,13 @@ class Puyo(Enum):
     PURPLE = auto()
     GARBAGE = auto()
 
-    def next(self):
-        cls = self.__class__
-        members = list(cls)
-        index = members.index(self) + 1
-        if index >= len(members):
-            index = 0
-        return members[index]
-
     def nextColor(self):
-        puyo = self.next()
-        while puyo is Puyo.NONE or puyo is Puyo.GARBAGE:
-            puyo = puyo.next()
-        return puyo
+        return self.next(
+            lambda enum: enum is not Puyo.NONE and enum is not Puyo.GARBAGE
+        )
+
+    def nextNonGarbage(self):
+        return self.next(lambda enum: enum is not Puyo.GARBAGE)
 
     def __str__(self):
         if self is Puyo.NONE:
@@ -93,31 +109,3 @@ def move2hovergrid(size, move=None):
 
     hovergrid[rslice, cslice] = puyos
     return hovergrid
-
-
-# A data model of a puyo puzzle. Contains a board, drawpile, and movelist.
-# New puyo puzzles start with two elements in the drawpile.
-class PuyoPuzzleModel:
-    def __init__(self, board, nhide, drawpile):
-        self.board = board
-        self.nhide = nhide
-        self.drawpile = drawpile
-
-    def new(size, nhide):
-        board = np.full((size[0] + nhide, size[1]), Puyo.NONE).astype(Puyo)
-        drawpile = np.full((2, 3, 2), Puyo.RED).astype(Puyo)
-        return PuyoPuzzleModel(board, nhide, drawpile)
-
-    def clearBoard(self):
-        self.board = np.full(self.board.shape, Puyo.NONE).astype(Puyo)
-
-    def resetDrawpile(self):
-        self.drawpile = np.full((2, 2, 1), Puyo.RED).astype(Puyo)
-
-    def newDrawpileElem(self, index):
-        self.drawpile = np.insert(
-            self.drawpile, index, np.full((2, 1), Puyo.RED).astype(Puyo), axis=0
-        )
-
-    def delDrawpileElem(self, index):
-        self.drawpile = np.delete(self.drawpile, index, axis=0)
