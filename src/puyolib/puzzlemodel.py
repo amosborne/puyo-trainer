@@ -11,4 +11,9 @@ class PuzzleModel:
         self.insertDrawpileElem(0)
 
     def insertDrawpileElem(self, index):
+        print(index, len(self.drawpile))
         self.drawpile.insert(index, PuyoDrawpileElemModel(self.drawpile_elem_size))
+
+    def deleteDrawpileElem(self, index):
+        print(index, len(self.drawpile))
+        del self.drawpile[index]

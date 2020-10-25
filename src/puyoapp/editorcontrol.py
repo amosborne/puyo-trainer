@@ -64,9 +64,9 @@ class EditorVC:
             view.drawpile_view.insertElement(index, graphic)
 
         def delDrawpileElem(index):
-            if model.drawpile.shape[0] > 2:
-                model.delDrawpileElem(index)
-                view.setDrawpileGraphics(model.drawpile)
+            if len(model.drawpile) > 2:
+                model.deleteDrawpileElem(index)
+                view.drawpile_view.deleteElement(index)
 
         def startSolution():
             self.editorview.centralWidget().setCurrentWidget(self.editorview.solverview)
@@ -74,7 +74,7 @@ class EditorVC:
         view.click_board_puyos.connect(changeBoardElem)
         view.click_drawpile_puyos.connect(changeDrawpileElem)
         view.click_drawpile_insert.connect(insertDrawpileElem)
-        # view.click_drawpile_delete.connect(delDrawpileElem)
+        view.click_drawpile_delete.connect(delDrawpileElem)
         # view.click_reset_drawpile.connect(resetDrawpile)
         view.click_clear_board.connect(clearBoard)
         # view.click_start.connect(startSolution)

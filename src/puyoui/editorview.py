@@ -12,8 +12,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, pyqtSignal
 from puyoui.puyoview import PuyoGridView
 from puyoui.gameview import GameplayView
-from puyoui.qtutils import deleteItemsOfLayout
-from functools import partial
+from puyoui.qtutils import deleteItemOfLayout
 
 
 """
@@ -103,27 +102,15 @@ class DrawpileView(QScrollArea):
 
     def insertElement(self, index, graphicmodel):
         elem = DrawpileElementView(graphicmodel, index)
-        elem.click_insert.connect(partial(self.click_insert.emit, index))
-        elem.click_delete.connect(partial(self.click_delete.emit, index))
+        elem.click_insert.connect(self.click_insert.emit)
+        elem.click_delete.connect(self.click_delete.emit)
         elem.click_puyos.connect(self.click_puyos)
-
         self.layout.insertLayout(index, elem)
-        # todo: relabel
+        self.updateView()
 
-    # def setGraphics(self, drawpile):
-    #     layout = self.widget().layout()
-    #     deleteItemsOfLayout(layout)
-
-    #     for index, puyos in enumerate(drawpile):
-    #         drawpile_elem = DrawpileElementView(self.graphicsmodel, puyos, index + 1)
-    #         drawpile_elem.click_insert.connect(partial(self.click_insert.emit, index))
-    #         drawpile_elem.click_delete.connect(partial(self.click_delete.emit, index))
-    #         drawpile_elem.click_puyos.connect(
-    #             lambda pos, index=index: self.click_puyos.emit((index, *pos))
-    #         )
-    #         layout.addLayout(drawpile_elem)
-
-    #     layout.addStretch()
+    def deleteElement(self, index):
+        deleteItemOfLayout(self.layout, index)
+        self.updateView()
 
     def updateView(self):
         for i in range(self.layout.count() - 1):
