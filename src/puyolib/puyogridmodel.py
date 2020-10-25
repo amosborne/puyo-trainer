@@ -109,7 +109,7 @@ class PuyoDrawpileElemModel(AbstractPuyoGridModel):
         for elem in self:
             if elem.puyo is not Puyo.NONE:
                 row_sz = elem.pos[0] if elem.pos[0] > row_sz else row_sz
-                col_sz = elem.pos[1] if elem.pos[0] > col_sz else col_sz
+                col_sz = elem.pos[1] if elem.pos[1] > col_sz else col_sz
 
         return (row_sz + 1, col_sz + 1)
 
@@ -129,11 +129,16 @@ class PuyoHoverAreaModel(AbstractPuyoGridModel):
             return
 
         # # Update move if it doesn't fit.
-        if (
-            move.direc is Direc.NORTH
-            and move.puyos.shape()[1] + move.col > self.shape()[1]
-        ):
-            return self.assignMove(move._replace(col=move.col - 1))
+        if move.direc is Direc.NORTH:
+            if move.col + move.puyos.shape()[1] > self.shape()[1]:
+                return self.assignMove(move._replace(col=move.col - 1))
+            elif move.col < 0:
+                return self.assignMove(move._replace(col=move.col + 1))
+        elif move.direc is Direc.SOUTH:
+            if move.col - move.puyos.shape()[1] + 1 < 0:
+                return self.assignMove(move._replace(col=move.col + 1))
+            elif move.col >= self.shape()[1]:
+                return self.assignMove(move._replace(col=move.col - 1))
 
         # Assign move to grid.
         puyos = move.puyos.grid()

@@ -22,8 +22,10 @@ class GameplayVC:
             self.move = self.move._replace(col=self.move.col + 1)
             self.move = self.hoverarea.assignMove(self.move)
             self.view.updateView(draw_index=self.draw_index)
-        # if key == 16777234:  # KEY LEFT
-        #     print("left")
+        if key == 16777234:  # KEY LEFT
+            self.move = self.move._replace(col=self.move.col - 1)
+            self.move = self.hoverarea.assignMove(self.move)
+            self.view.updateView(draw_index=self.draw_index)
         # if key == 16777237:  # KEY DOWN
         #     print("down")
         # if key == 16777235:  # KEY UP
@@ -33,7 +35,7 @@ class GameplayVC:
     def takeControl(self):
         self.draw_index = 1
         self.move = Move(
-            puyos=self.model.drawpile[self.draw_index - 1], col=2, direc=Direc.NORTH
+            puyos=self.model.drawpile[self.draw_index - 1], col=2, direc=Direc.SOUTH
         )
         self.hoverarea.assignMove(self.move)
         self.view.updateView(draw_index=self.draw_index)
