@@ -14,6 +14,7 @@ class EditorVC:
             elem_graphic = PuyoGraphicModel(skin, elem)
             drawpile_graphic.append(elem_graphic)
 
+        self.skin = skin
         self.view = EditorView(board_graphic, drawpile_graphic)
 
         self.puzzlemodel = puzzlemodel
@@ -47,9 +48,8 @@ class EditorVC:
             model.board[pos] = model.board[pos].next()
             view.updateView()
 
-        def changeDrawpileElem(pos):
-            index, row, col = pos
-            pos = (row, col)
+        def changeDrawpileElem(idx_pos):
+            index, pos = idx_pos
             puyo = model.drawpile[index][pos]
             if pos in {(0, 0), (1, 0)}:
                 model.drawpile[index][pos] = puyo.nextColor()
@@ -58,8 +58,10 @@ class EditorVC:
             view.updateView()
 
         def insertDrawpileElem(index):
-            model.newDrawpileElem(index + 1)
-            view.setDrawpileGraphics(model.drawpile)
+            index += 1
+            model.insertDrawpileElem(index)
+            graphic = PuyoGraphicModel(self.skin, model.drawpile[index])
+            view.drawpile_view.insertElement(index, graphic)
 
         def delDrawpileElem(index):
             if model.drawpile.shape[0] > 2:
@@ -71,7 +73,7 @@ class EditorVC:
 
         view.click_board_puyos.connect(changeBoardElem)
         view.click_drawpile_puyos.connect(changeDrawpileElem)
-        # view.click_drawpile_insert.connect(insertDrawpileElem)
+        view.click_drawpile_insert.connect(insertDrawpileElem)
         # view.click_drawpile_delete.connect(delDrawpileElem)
         # view.click_reset_drawpile.connect(resetDrawpile)
         view.click_clear_board.connect(clearBoard)

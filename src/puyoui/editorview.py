@@ -26,24 +26,24 @@ modifying the displayed information as appropriate.
 # A view of a single drawpile element, including drawpile control buttons.
 # Specify the graphic model and its index in the drawpile.
 class DrawpileElementView(QHBoxLayout):
-    click_insert = pyqtSignal()
-    click_delete = pyqtSignal()
+    click_insert = pyqtSignal(int)
+    click_delete = pyqtSignal(int)
     click_puyos = pyqtSignal(tuple)
 
     def __init__(self, graphicmodel, index):
         super().__init__()
 
         # Label indicating the position in the drawpile.
-        label = QLabel()
+        label = QLabel(str(index + 1))
         label.setFixedWidth(25)
         label.setAlignment(Qt.AlignCenter)
         self.label = label
-        self.setIndex(index)
+        self.index = index
         self.addWidget(label)
 
         # View of puyos to be drawn.
         puyos = PuyoGridView(graphicmodel, isframed=True)
-        puyos.clicked.connect(lambda pos: self.click_puyos.emit(pos))
+        puyos.clicked.connect(lambda pos: self.click_puyos.emit((self.index, pos)))
         self.addWidget(puyos)
 
         # Delete and insert drawpile element buttons.
@@ -52,13 +52,13 @@ class DrawpileElementView(QHBoxLayout):
 
         delete_button = QPushButton()
         delete_button.setText("Delete")
-        delete_button.clicked.connect(self.click_delete)
+        delete_button.clicked.connect(lambda: self.click_delete.emit(self.index))
         delete_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
         button_layout.addWidget(delete_button)
 
         insert_button = QPushButton()
         insert_button.setText("Insert")
-        insert_button.clicked.connect(self.click_insert)
+        insert_button.clicked.connect(lambda: self.click_insert.emit(self.index))
         insert_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
         button_layout.addWidget(insert_button)
 
@@ -67,10 +67,9 @@ class DrawpileElementView(QHBoxLayout):
         self.label = label
         self.puyos = puyos
 
-    def setIndex(self, index):
+    def updateView(self, index):
+        self.index = index
         self.label.setText(str(index + 1))
-
-    def updateView(self):
         self.puyos.updateView()
 
 
@@ -106,9 +105,8 @@ class DrawpileView(QScrollArea):
         elem = DrawpileElementView(graphicmodel, index)
         elem.click_insert.connect(partial(self.click_insert.emit, index))
         elem.click_delete.connect(partial(self.click_delete.emit, index))
-        elem.click_puyos.connect(
-            lambda pos, index=index: self.click_puyos.emit((index, *pos))
-        )
+        elem.click_puyos.connect(self.click_puyos)
+
         self.layout.insertLayout(index, elem)
         # todo: relabel
 
@@ -130,8 +128,7 @@ class DrawpileView(QScrollArea):
     def updateView(self):
         for i in range(self.layout.count() - 1):
             elem = self.layout.itemAt(i)
-            # elem.setIndex(i)
-            elem.updateView()
+            elem.updateView(i)
 
 
 # The first of two stacked widgets in the editor, this window defines the puzzle.
