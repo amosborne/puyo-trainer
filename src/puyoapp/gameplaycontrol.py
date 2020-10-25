@@ -35,7 +35,7 @@ class GameplayVC:
     def takeControl(self):
         self.draw_index = 1
         self.move = Move(
-            puyos=self.model.drawpile[self.draw_index - 1], col=2, direc=Direc.SOUTH
+            puyos=self.model.drawpile[self.draw_index - 1], col=2, direc=Direc.EAST
         )
         self.hoverarea.assignMove(self.move)
         self.view.updateView(draw_index=self.draw_index)

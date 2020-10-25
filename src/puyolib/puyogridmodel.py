@@ -123,42 +123,66 @@ class PuyoHoverAreaModel(AbstractPuyoGridModel):
         size = (2 * max(drawpile_elem.board.shape) - 1, board.shape()[1])
         super().__init__(size, nhide=0)
 
+        self.crow = int((size[0] + 1) / 2 - 1)
+
     def assignMove(self, move=None):
         self.reset()
         if move is None:
             return
 
-        # # Update move if it doesn't fit.
+        # For each orientation, check there isn't an edge collision.
+        # If there is a collision, slide the move horizontally to fit.
         if move.direc is Direc.NORTH:
             if move.col + move.puyos.shape()[1] > self.shape()[1]:
                 return self.assignMove(move._replace(col=move.col - 1))
             elif move.col < 0:
                 return self.assignMove(move._replace(col=move.col + 1))
+
         elif move.direc is Direc.SOUTH:
             if move.col - move.puyos.shape()[1] + 1 < 0:
                 return self.assignMove(move._replace(col=move.col + 1))
             elif move.col >= self.shape()[1]:
                 return self.assignMove(move._replace(col=move.col - 1))
 
-        # Assign move to grid.
-        puyos = move.puyos.grid()
-        if move.direc is Direc.NORTH or move.direc is Direc.EAST:
-            if move.direc is Direc.EAST:
-                puyos = np.rot90(puyos, k=1)
-                crow = int((self.shape()[0] - 1) / 2 + 1)
-            else:
-                crow = self.shape()[0] - move.puyos.shape()[0] + 1
-            rslice = slice(crow - move.puyos.shape()[0], crow)
-            cslice = slice(move.col, move.col + puyos.shape[1])
-        elif move.direc is Direc.SOUTH or move.direc is Direc.WEST:
-            if move.direc is Direc.SOUTH:
-                puyos = np.rot90(puyos, k=2)
-                crow = int((self.shape()[0] - 1) / 2 + 1)
-            else:
-                puyos = np.rot90(puyos, k=-1)
-                crow = self.shape()[0] - 1
-            rslice = slice(crow - move.puyos.shape()[0], crow)
+        elif move.direc is Direc.EAST:
+            if move.col + move.puyos.shape()[0] > self.shape()[1]:
+                return self.assignMove(move._replace(col=move.col - 1))
+            elif move.col < 0:
+                return self.assignMove(move._replace(col=move.col + 1))
+
+        # Apply the move to the hover area grid by slicing.
+        if move.direc is Direc.NORTH:
+            puyos = move.puyos.grid()
+            rslice = slice(self.crow, self.crow + move.puyos.shape()[0])
+            cslice = slice(move.col, move.col + move.puyos.shape()[1])
+
+        if move.direc is Direc.SOUTH:
+            puyos = np.rot90(move.puyos.grid(), k=2)
+            rslice = slice(self.crow - move.puyos.shape()[0] + 1, self.crow + 1)
             cslice = slice(move.col - move.puyos.shape()[1] + 1, move.col + 1)
+
+        if move.direc is Direc.EAST:
+            puyos = np.rot90(move.puyos.grid(), k=1)
+            rslice = slice(self.crow - move.puyos.shape()[1] + 1, self.crow + 1)
+            cslice = slice(move.col, move.col + move.puyos.shape()[0])
+
+        # if move.direc is Direc.NORTH or move.direc is Direc.EAST:
+        #     if move.direc is Direc.EAST:
+        #         puyos = np.rot90(puyos, k=1)
+        #         crow = int((self.shape()[0] - 1) / 2 + 1)
+        #     else:
+        #         crow = self.shape()[0] - move.puyos.shape()[0] + 1
+        #     rslice = slice(crow - move.puyos.shape()[0], crow)
+        #     cslice = slice(move.col, move.col + puyos.shape[1])
+        # elif move.direc is Direc.SOUTH or move.direc is Direc.WEST:
+        #     if move.direc is Direc.SOUTH:
+        #         puyos = np.rot90(puyos, k=2)
+        #         crow = int((self.shape()[0] - 1) / 2 + 1)
+        #     else:
+        #         puyos = np.rot90(puyos, k=-1)
+        #         crow = self.shape()[0] - 1
+        #     rslice = slice(crow - move.puyos.shape()[0], crow)
+        #     cslice = slice(move.col - move.puyos.shape()[1] + 1, move.col + 1)
 
         self[rslice, cslice] = puyos
         return move
