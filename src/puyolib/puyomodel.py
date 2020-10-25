@@ -1,11 +1,13 @@
 from enum import Enum, auto
-from collections import namedtuple, defaultdict
+from collections import namedtuple
 import numpy as np
+
 
 """
 The module creates data models for handling and displaying puyo
 puzzles.
 """
+
 
 # An enum class which can cycle amongst its members.
 class EnumCycle(Enum):
@@ -38,14 +40,6 @@ class Puyo(EnumCycle):
     YELLOW = auto()
     PURPLE = auto()
     GARBAGE = auto()
-
-    def nextColor(self):
-        return self.next(
-            lambda enum: enum is not Puyo.NONE and enum is not Puyo.GARBAGE
-        )
-
-    def nextNonGarbage(self):
-        return self.next(lambda enum: enum is not Puyo.GARBAGE)
 
     def __str__(self):
         if self is Puyo.NONE:

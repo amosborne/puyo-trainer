@@ -2,35 +2,27 @@ from puyolib.puyographicmodel import PuyoGraphicModel  # model
 from puyoui.editorview import EditorView  # view
 
 
+# View-controller of the puzzle editor GUI.
+# Manages view callbacks and keeps the model and view synchronized.
 class EditorVC:
     def __init__(self, puzzlemodel, skin):
 
-        # Initialize the editor view with the graphic model links.
+        # Initialize the editor view with direct access to the graphic models.
         board_graphic = PuyoGraphicModel(skin, puzzlemodel.board)
-        drawpile_graphic = []
+        drawpile_graphics = []
         for elem in puzzlemodel.drawpile:
-            elem[0, 0] = elem[0, 0].nextColor()
-            elem[1, 0] = elem[1, 0].nextColor()
             elem_graphic = PuyoGraphicModel(skin, elem)
-            drawpile_graphic.append(elem_graphic)
+            drawpile_graphics.append(elem_graphic)
 
         self.skin = skin
-        self.view = EditorView(board_graphic, drawpile_graphic)
-
+        self.view = EditorView(board_graphic, drawpile_graphics)
         self.puzzlemodel = puzzlemodel
-        self.board_graphic = board_graphic
 
         # Bind all the GUI callbacks.
         self.bindDefineView()
 
-        # editorview.show()
-
-        # self.gamecontrol = GameplayController(
-        #     puzzlemodel, editorview.solverview.gameplayview
-        # )
-
-        # self.bindDefineView()
-        # self.bindSolverView()
+    def insertDrawpileElement(self, index):
+        pass
 
     def bindDefineView(self):
         model = self.puzzlemodel
@@ -41,8 +33,9 @@ class EditorVC:
             view.updateView()
 
         def resetDrawpile():
-            model.resetDrawpile()
-            view.setDrawpileGraphics(model.drawpile)
+            for elem in model.drawpile:
+                elem.reset()
+            view.updateView()
 
         def changeBoardElem(pos):
             model.board[pos] = model.board[pos].next()
@@ -50,23 +43,19 @@ class EditorVC:
 
         def changeDrawpileElem(idx_pos):
             index, pos = idx_pos
-            puyo = model.drawpile[index][pos]
-            if pos in {(0, 0), (1, 0)}:
-                model.drawpile[index][pos] = puyo.nextColor()
-            else:
-                model.drawpile[index][pos] = puyo.nextNonGarbage()
+            model.drawpile[index][pos] = model.drawpile[index][pos].next()
             view.updateView()
 
         def insertDrawpileElem(index):
-            index += 1
-            model.insertDrawpileElem(index)
-            graphic = PuyoGraphicModel(self.skin, model.drawpile[index])
-            view.drawpile_view.insertElement(index, graphic)
+            elem = model.newDrawpileElem(index + 1)
+            view.drawpile.insert(index + 1, PuyoGraphicModel(self.skin, elem))
+            view.updateView()
 
-        def delDrawpileElem(index):
+        def deleteDrawpileElem(index):
             if len(model.drawpile) > 2:
-                model.deleteDrawpileElem(index)
-                view.drawpile_view.deleteElement(index)
+                del model.drawpile[index]
+                del view.drawpile[index]
+                view.updateView()
 
         def startSolution():
             self.editorview.centralWidget().setCurrentWidget(self.editorview.solverview)
@@ -74,8 +63,8 @@ class EditorVC:
         view.click_board_puyos.connect(changeBoardElem)
         view.click_drawpile_puyos.connect(changeDrawpileElem)
         view.click_drawpile_insert.connect(insertDrawpileElem)
-        view.click_drawpile_delete.connect(delDrawpileElem)
-        # view.click_reset_drawpile.connect(resetDrawpile)
+        view.click_drawpile_delete.connect(deleteDrawpileElem)
+        view.click_reset_drawpile.connect(resetDrawpile)
         view.click_clear_board.connect(clearBoard)
         # view.click_start.connect(startSolution)
 

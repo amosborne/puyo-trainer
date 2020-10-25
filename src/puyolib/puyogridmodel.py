@@ -57,7 +57,7 @@ class AbstractPuyoGridModel:
         return deepcopy(self)
 
     def reset(self):
-        self.board[:] = Puyo.NONE
+        self[:] = Puyo.NONE
 
     def isHidden(self, key):
         return key[0] >= self.board.shape[0] - self.nhide
@@ -80,6 +80,23 @@ class PuyoBoardModel(AbstractPuyoGridModel):
 class PuyoDrawpileElemModel(AbstractPuyoGridModel):
     def __init__(self, size):
         super().__init__(size, nhide=0)
+
+    # Drawpile elements are restricted from having certain puyos in
+    # specific positions (assumes a minimum size of (2,1)).
+    def __setitem__(self, key, value):
+        self.board[key] = value
+        for elem in self:
+            if self.restrict(elem.pos, elem.puyo):
+                puyo = elem.puyo
+                while self.restrict(elem.pos, puyo):
+                    puyo = puyo.next(lambda puyo: not self.restrict(elem.pos, puyo))
+                self.board[elem.pos] = puyo
+
+    def restrict(self, pos, puyo):
+        if pos in {(0, 0), (1, 0)} and puyo is Puyo.NONE:
+            return True
+        elif puyo is Puyo.GARBAGE:
+            return True
 
 
 class PuyoHoverAreaModel(AbstractPuyoGridModel):
