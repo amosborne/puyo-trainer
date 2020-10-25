@@ -100,10 +100,36 @@ class PuyoDrawpileElemModel(AbstractPuyoGridModel):
             return True
 
 
+# Note: this class does not check that the drawpile elements can fit the board.
 class PuyoHoverAreaModel(AbstractPuyoGridModel):
     def __init__(self, board, drawpile_elem):
         size = (2 * drawpile_elem.shape[0] - 1, board.shape[1])
         super().__init__(size, nhide=0)
+
+    def assignMove(self, move=None):
+        if move is None:
+            self.reset()
+
+        puyos = move.puyos.board
+        if move.direc is Direc.NORTH or move.direc is Direc.EAST:
+            if move.direc is Direc.EAST:
+                puyos = np.rot90(puyos, k=1)
+                crow = int((self.shape[0] - 1) / 2 + 1)
+            else:
+                crow = self.shape[0]
+            rslice = slice(crow - puyos.shape[0], crow)
+            cslice = slice(move.col, move.col + puyos.shape[1])
+        elif move.direc is Direc.SOUTH or move.direc is Direc.WEST:
+            if move.direc is Direc.SOUTH:
+                puyos = np.rot90(puyos, k=2)
+                crow = int((self.shape[0] - 1) / 2 + 1)
+            else:
+                puyos = np.rot90(puyos, k=-1)
+                crow = self.shape[0] - 1
+            rslice = slice(crow - puyos.shape[0], crow)
+            cslice = slice(move.col - puyos.shape[1] + 1, move.col + 1)
+
+        self[rslice, cslice] = puyos
 
 
 def adjacency_direction(pos1, pos2):

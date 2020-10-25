@@ -25,8 +25,8 @@ class GameplayView(QWidget):
         layout.addStretch()
         layout.setContentsMargins(0, 0, 0, 0)
 
-        self.layout = layout
         self.setFocusPolicy(Qt.StrongFocus)
+        self.layout = layout
         self.updateView(draw_index)
 
     def updateView(self, draw_index):
@@ -41,12 +41,13 @@ class GameplayView(QWidget):
             except IndexError:
                 pass
 
-        label = QLabel(str(len(self.drawpile) - draw_index) + " remaining.")
+        label = QLabel(str(len(self.drawpile) - draw_index + 1) + " remaining.")
         layout.addWidget(label)
         layout.addStretch()
 
         deleteItemOfLayout(self.layout, 1)
         self.layout.insertLayout(1, layout)
+        self.setFocus()
 
     def keyPressEvent(self, event):
         super().keyPressEvent(event)

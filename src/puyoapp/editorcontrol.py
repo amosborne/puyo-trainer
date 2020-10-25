@@ -1,6 +1,7 @@
 from puyolib.puyogridmodel import PuyoHoverAreaModel  # model
 from puyolib.puyographicmodel import PuyoGraphicModel  # model
 from puyoui.editorview import EditorView  # view
+from puyoapp.gameplaycontrol import GameplayVC  # controller
 
 
 # View-controller of the puzzle editor GUI.
@@ -12,10 +13,12 @@ class EditorVC:
 
         elem = puzzlemodel.newDrawpileElem()  # hack
 
-        self.hoverarea = PuyoHoverAreaModel(puzzlemodel.board, elem)
-        hoverarea_graphics = PuyoGraphicModel(skin, self.hoverarea)
+        hoverarea = PuyoHoverAreaModel(puzzlemodel.board, elem)
+        hoverarea_graphics = PuyoGraphicModel(skin, hoverarea)
 
         self.view = EditorView(board_graphic, drawpile_graphics, hoverarea_graphics)
+
+        self.game_controller = GameplayVC(puzzlemodel, hoverarea, self.view.solverview)
 
         self.skin = skin
         self.model = puzzlemodel
@@ -65,7 +68,7 @@ class EditorVC:
 
         def startSolution():
             self.view.centralWidget().setCurrentWidget(self.view.solverview)
-            self.view.solverview.updateView()
+            self.game_controller.takeControl()
 
         resetDrawpile()
 
