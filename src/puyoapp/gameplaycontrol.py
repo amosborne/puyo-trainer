@@ -1,4 +1,5 @@
 from puyolib.puyomodel import Move, Direc
+from PyQt5.QtCore import Qt
 
 
 class GameplayVC:
@@ -11,25 +12,26 @@ class GameplayVC:
         self.view = view
 
     def processKey(self, key):
-        if key == 88:  # X
+        if key == Qt.Key_X:
             self.move = self.move._replace(direc=self.move.direc.rotateR())
             self.move = self.hoverarea.assignMove(self.move)
             self.view.updateView(draw_index=self.draw_index)
 
-        elif key == 90:  # Z
+        elif key == Qt.Key_Z:
             self.move = self.move._replace(direc=self.move.direc.rotateL())
             self.move = self.hoverarea.assignMove(self.move)
             self.view.updateView(draw_index=self.draw_index)
 
-        elif key == 16777236:  # KEY RIGHT
+        elif key == Qt.Key_Right:
             self.move = self.move._replace(col=self.move.col + 1)
             self.move = self.hoverarea.assignMove(self.move)
             self.view.updateView(draw_index=self.draw_index)
 
-        elif key == 16777234:  # KEY LEFT
+        elif key == Qt.Key_Left:
             self.move = self.move._replace(col=self.move.col - 1)
             self.move = self.hoverarea.assignMove(self.move)
             self.view.updateView(draw_index=self.draw_index)
+
         # if key == 16777237:  # KEY DOWN
         #     print("down")
         # if key == 16777235:  # KEY UP
