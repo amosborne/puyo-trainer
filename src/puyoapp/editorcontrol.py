@@ -20,6 +20,7 @@ class EditorVC:
         self.skin = skin
         self.model = puzzlemodel
         self.bindDefineView()
+        self.bindSolverView()
 
     def bindDefineView(self):
         model = self.model
@@ -63,7 +64,8 @@ class EditorVC:
             insertDrawpileElem()
 
         def startSolution():
-            self.editorview.centralWidget().setCurrentWidget(self.editorview.solverview)
+            self.view.centralWidget().setCurrentWidget(self.view.solverview)
+            self.view.solverview.updateView()
 
         resetDrawpile()
 
@@ -73,14 +75,14 @@ class EditorVC:
         view.click_drawpile_delete.connect(deleteDrawpileElem)
         view.click_reset_drawpile.connect(resetDrawpile)
         view.click_clear_board.connect(clearBoard)
-        # view.click_start.connect(startSolution)
+        view.click_start.connect(startSolution)
 
     def bindSolverView(self):
-        model = self.puzzlemodel
-        view = self.editorview.solverview
+        model = self.model
+        view = self.view.solverview
 
         def exitSolver():
-            self.editorview.centralWidget().setCurrentWidget(self.editorview.defineview)
+            self.view.centralWidget().setCurrentWidget(self.view.defineview)
 
-        view.back_button.clicked.connect(exitSolver)
-        view.save_button.clicked.connect(lambda: print("save and exit!"))
+        view.click_back.connect(exitSolver)
+        view.click_save.connect(lambda: print("save and exit!"))

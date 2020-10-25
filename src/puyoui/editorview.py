@@ -156,11 +156,13 @@ class PuzzleDefineView(QWidget):
 class PuzzleSolveView(QWidget):
     click_back = pyqtSignal()
     click_save = pyqtSignal()
+    keypressed = pyqtSignal(int)
 
     def __init__(self, board, drawpile, hoverarea, parent=None):
         super().__init__(parent)
 
         self.gameplayview = GameplayView(board, drawpile, hoverarea, draw_index=0)
+        self.gameplayview.keypressed.connect(self.keypressed)
 
         layout = QVBoxLayout(self)
         layout.addWidget(self.gameplayview)
@@ -175,6 +177,9 @@ class PuzzleSolveView(QWidget):
         save_button.setStyleSheet("background-color: green")
         save_button.clicked.connect(self.click_save)
         layout.addWidget(save_button)
+
+    def updateView(self, draw_index=0):
+        self.gameplayview.updateView(draw_index)
 
 
 class EditorView(QMainWindow):

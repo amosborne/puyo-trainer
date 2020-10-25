@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel
 from PyQt5.QtCore import pyqtSignal, Qt
 from puyoui.puyoview import PuyoGridView
+from puyoui.qtutils import deleteItemOfLayout
 
 
 class GameplayView(QWidget):
@@ -18,15 +19,15 @@ class GameplayView(QWidget):
         leftlayout.addWidget(self.hover_view)
         leftlayout.addWidget(self.board_view)
 
-        self.updateView(draw_index)
-
         layout = QHBoxLayout(self)
         layout.addLayout(leftlayout)
-        layout.addLayout(self.drawpile_layout)
+        layout.addLayout(QVBoxLayout())  # placeholder
         layout.addStretch()
         layout.setContentsMargins(0, 0, 0, 0)
 
+        self.layout = layout
         self.setFocusPolicy(Qt.StrongFocus)
+        self.updateView(draw_index)
 
     def updateView(self, draw_index):
         self.board_view.updateView()
@@ -44,7 +45,8 @@ class GameplayView(QWidget):
         layout.addWidget(label)
         layout.addStretch()
 
-        self.drawpile_layout = layout
+        deleteItemOfLayout(self.layout, 1)
+        self.layout.insertLayout(1, layout)
 
     def keyPressEvent(self, event):
         super().keyPressEvent(event)
