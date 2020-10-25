@@ -41,9 +41,9 @@ class GameplayView(QWidget):
             except IndexError:
                 pass
 
+        layout.addStretch()
         label = QLabel(str(len(self.drawpile) - draw_index + 1) + " remaining.")
         layout.addWidget(label)
-        layout.addStretch()
 
         deleteItemOfLayout(self.layout, 1)
         self.layout.insertLayout(1, layout)

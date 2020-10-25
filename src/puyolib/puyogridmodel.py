@@ -13,7 +13,6 @@ class AbstractPuyoGridModel:
     def __init__(self, size, nhide):
         fullsize = (size[0] + nhide, size[1])
         self.board = np.empty(fullsize).astype(Puyo)
-        self.shape = self.board.shape
         self.reset()
         self.nhide = nhide
 
@@ -57,6 +56,12 @@ class AbstractPuyoGridModel:
     # def copy(self):
     #     return deepcopy(self)
 
+    def shape(self):
+        return self.board.shape
+
+    def grid(self):
+        return self.board
+
     def reset(self):
         self[:] = Puyo.NONE
 
@@ -99,37 +104,59 @@ class PuyoDrawpileElemModel(AbstractPuyoGridModel):
         elif puyo is Puyo.GARBAGE:
             return True
 
+    def shape(self):
+        row_sz, col_sz = (0, 0)
+        for elem in self:
+            if elem.puyo is not Puyo.NONE:
+                row_sz = elem.pos[0] if elem.pos[0] > row_sz else row_sz
+                col_sz = elem.pos[1] if elem.pos[0] > col_sz else col_sz
+
+        return (row_sz + 1, col_sz + 1)
+
+    def grid(self):
+        return self[0 : self.shape()[0], 0 : self.shape()[1]]
+
 
 # Note: this class does not check that the drawpile elements can fit the board.
 class PuyoHoverAreaModel(AbstractPuyoGridModel):
     def __init__(self, board, drawpile_elem):
-        size = (2 * drawpile_elem.shape[0] - 1, board.shape[1])
+        size = (2 * max(drawpile_elem.board.shape) - 1, board.shape()[1])
         super().__init__(size, nhide=0)
 
     def assignMove(self, move=None):
+        self.reset()
         if move is None:
-            self.reset()
+            return
 
-        puyos = move.puyos.board
+        # # Update move if it doesn't fit.
+        if (
+            move.direc is Direc.NORTH
+            and move.puyos.shape()[1] + move.col > self.shape()[1]
+        ):
+            return self.assignMove(move._replace(col=move.col - 1))
+
+        # Assign move to grid.
+        puyos = move.puyos.grid()
         if move.direc is Direc.NORTH or move.direc is Direc.EAST:
             if move.direc is Direc.EAST:
                 puyos = np.rot90(puyos, k=1)
-                crow = int((self.shape[0] - 1) / 2 + 1)
+                crow = int((self.shape()[0] - 1) / 2 + 1)
             else:
-                crow = self.shape[0]
-            rslice = slice(crow - puyos.shape[0], crow)
+                crow = self.shape()[0] - move.puyos.shape()[0] + 1
+            rslice = slice(crow - move.puyos.shape()[0], crow)
             cslice = slice(move.col, move.col + puyos.shape[1])
         elif move.direc is Direc.SOUTH or move.direc is Direc.WEST:
             if move.direc is Direc.SOUTH:
                 puyos = np.rot90(puyos, k=2)
-                crow = int((self.shape[0] - 1) / 2 + 1)
+                crow = int((self.shape()[0] - 1) / 2 + 1)
             else:
                 puyos = np.rot90(puyos, k=-1)
-                crow = self.shape[0] - 1
-            rslice = slice(crow - puyos.shape[0], crow)
-            cslice = slice(move.col - puyos.shape[1] + 1, move.col + 1)
+                crow = self.shape()[0] - 1
+            rslice = slice(crow - move.puyos.shape()[0], crow)
+            cslice = slice(move.col - move.puyos.shape()[1] + 1, move.col + 1)
 
         self[rslice, cslice] = puyos
+        return move
 
 
 def adjacency_direction(pos1, pos2):
