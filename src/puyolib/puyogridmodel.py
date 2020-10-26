@@ -38,22 +38,19 @@ class AbstractPuyoGridModel:
 
         return dataframe.__str__()
 
-    # # Subtraction of two puyo grid models (assuming the same full size)
-    # # returns the set of (pos, puyo) for which self has a puyo and other
-    # # does not. This is primarily intended for determining ghost puyo
-    # # locations given a post-move and pre-move puyo board model.
-    # def __sub__(self, other):
-    #     delta = set()
+    # Subtraction of two puyo grid models (assuming the same full size)
+    # returns the set of (pos, puyo) for which self has a puyo and other
+    # does not. This is primarily intended for determining ghost puyo
+    # locations given a post-move and pre-move puyo board model.
+    def __sub__(self, other):
+        delta = set()
 
-    #     for elem in self:
-    #         other_puyo = other[elem.pos]
-    #         if elem.puyo is not Puyo.NONE and other_puyo is Puyo.NONE:
-    #             delta.add(elem)
+        for elem in self:
+            other_puyo = other[elem.pos]
+            if elem.puyo is not Puyo.NONE and other_puyo is Puyo.NONE:
+                delta.add(elem)
 
-    #     return delta
-
-    # def copy(self):
-    #     return deepcopy(self)
+        return delta
 
     def shape(self):
         return self.board.shape
@@ -114,7 +111,9 @@ class PuyoDrawpileElemModel(AbstractPuyoGridModel):
 # Whenever a move is applied to the puyo board model, the move is recorded
 # alongside the board pre-application.
 class PuyoBoardModel(AbstractPuyoGridModel):
-    movelist = []
+    def __init__(self, size, nhide):
+        super().__init__(size, nhide)
+        self.movelist = []
 
     def _colHeight(self, idx):
         if all(self[:, idx] != Puyo.NONE):

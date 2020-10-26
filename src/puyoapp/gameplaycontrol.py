@@ -62,4 +62,12 @@ class GameplayVC:
 
     def _updateView(self):
         self.move = self.hoverarea.assignMove(self.move)
+
+        if self.move:
+            future_board = deepcopy(self.model.board)
+            future_board.applyMove(self.move)
+            self.view.board.ghosts = future_board - self.model.board
+        else:
+            self.view.board.ghosts = set()
+
         self.view.updateView(self.draw_index)

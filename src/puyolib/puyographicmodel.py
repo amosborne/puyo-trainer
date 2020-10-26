@@ -81,3 +81,6 @@ SKIN_COL_MAP[AdjMatch(north=False, south=False, east=True, west=True)] = 12
 SKIN_COL_MAP[AdjMatch(north=False, south=True, east=True, west=True)] = 13
 SKIN_COL_MAP[AdjMatch(north=True, south=False, east=True, west=True)] = 14
 SKIN_COL_MAP[AdjMatch(north=True, south=True, east=True, west=True)] = 15
+
+SKIN_GHOST_MAP = defaultdict(int)
+SKIN_GHOST_MAP[Puyo.RED]

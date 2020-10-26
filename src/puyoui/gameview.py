@@ -15,6 +15,7 @@ class GameplayView(QWidget):
     def __init__(self, board, drawpile, hoverarea, draw_index, parent=None):
         super().__init__(parent)
 
+        self.board = board
         self.board_view = PuyoGridView(board, isframed=True)
         self.hover_view = PuyoGridView(hoverarea, isframed=False)
 
