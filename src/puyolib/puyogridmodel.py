@@ -78,11 +78,6 @@ class AbstractPuyoGridModel:
         return adj
 
 
-class PuyoBoardModel(AbstractPuyoGridModel):
-    def applyMove(move):
-        pass
-
-
 class PuyoDrawpileElemModel(AbstractPuyoGridModel):
     def __init__(self, size):
         super().__init__(size, nhide=0)
@@ -115,6 +110,42 @@ class PuyoDrawpileElemModel(AbstractPuyoGridModel):
 
     def grid(self):
         return self[0 : self.shape()[0], 0 : self.shape()[1]]
+
+
+class PuyoBoardModel(AbstractPuyoGridModel):
+    def _colHeight(self, idx):
+        if all(self[:, idx] != Puyo.NONE):
+            return self.shape()[0]
+        else:
+            return np.argmin(self[:, idx] != Puyo.NONE)
+
+    def applyMove(self, move):
+        def applybyColumn(puyos, leftcol):
+            for cidx, puyocol in enumerate(puyos.T):
+                puyocol = [puyo for puyo in puyocol if puyo is not Puyo.NONE]
+                rstart = self._colHeight(cidx + leftcol)
+                for ridx, puyo in enumerate(puyocol):
+                    rend = rstart + ridx
+                    if rend < self.shape()[0]:
+                        self[rend, cidx + leftcol] = puyo
+                    else:
+                        break
+
+        if move.direc is Direc.NORTH:
+            puyos = move.puyos.grid()
+            applybyColumn(puyos, move.col)
+
+        elif move.direc is Direc.SOUTH:
+            puyos = np.rot90(move.puyos.grid(), k=2)
+            applybyColumn(puyos, move.col - move.puyos.shape()[1] + 1)
+
+        elif move.direc is Direc.EAST:
+            puyos = np.rot90(move.puyos.grid(), k=1)
+            applybyColumn(puyos, move.col)
+
+        elif move.direc is Direc.WEST:
+            puyos = np.rot90(move.puyos.grid(), k=-1)
+            applybyColumn(puyos, move.col - move.puyos.shape()[0] + 1)
 
 
 # Note: this class does not check that the drawpile elements can fit the board.
@@ -153,7 +184,7 @@ class PuyoHoverAreaModel(AbstractPuyoGridModel):
         elif move.direc is Direc.WEST:
             if move.col - move.puyos.shape()[0] + 1 < 0:
                 return self.assignMove(move._replace(col=move.col + 1))
-            elif move.col >= self.shape()[0]:
+            elif move.col > self.shape()[0]:
                 return self.assignMove(move._replace(col=move.col - 1))
 
         # Apply the move to the hover area grid by slicing.
@@ -162,17 +193,17 @@ class PuyoHoverAreaModel(AbstractPuyoGridModel):
             rslice = slice(self.crow, self.crow + move.puyos.shape()[0])
             cslice = slice(move.col, move.col + move.puyos.shape()[1])
 
-        if move.direc is Direc.SOUTH:
+        elif move.direc is Direc.SOUTH:
             puyos = np.rot90(move.puyos.grid(), k=2)
             rslice = slice(self.crow - move.puyos.shape()[0] + 1, self.crow + 1)
             cslice = slice(move.col - move.puyos.shape()[1] + 1, move.col + 1)
 
-        if move.direc is Direc.EAST:
+        elif move.direc is Direc.EAST:
             puyos = np.rot90(move.puyos.grid(), k=1)
             rslice = slice(self.crow - move.puyos.shape()[1] + 1, self.crow + 1)
             cslice = slice(move.col, move.col + move.puyos.shape()[0])
 
-        if move.direc is Direc.WEST:
+        elif move.direc is Direc.WEST:
             puyos = np.rot90(move.puyos.grid(), k=-1)
             rslice = slice(self.crow, self.crow + move.puyos.shape()[1])
             cslice = slice(move.col - move.puyos.shape()[0] + 1, move.col + 1)

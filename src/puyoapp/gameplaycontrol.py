@@ -32,8 +32,9 @@ class GameplayVC:
             self.move = self.hoverarea.assignMove(self.move)
             self.view.updateView(draw_index=self.draw_index)
 
-        # if key == 16777237:  # KEY DOWN
-        #     print("down")
+        if key == 16777237:
+            self.model.board.applyMove(self.move)
+            self.view.updateView(draw_index=self.draw_index)
         # if key == 16777235:  # KEY UP
         #     print("up")
 
