@@ -5,7 +5,12 @@ from puyoui.qtutils import deleteItemOfLayout
 
 
 class GameplayView(QWidget):
-    keypressed = pyqtSignal(int)
+    pressX = pyqtSignal()
+    pressZ = pyqtSignal()
+    pressUp = pyqtSignal()
+    pressDown = pyqtSignal()
+    pressRight = pyqtSignal()
+    pressLeft = pyqtSignal()
 
     def __init__(self, board, drawpile, hoverarea, draw_index, parent=None):
         super().__init__(parent)
@@ -51,4 +56,15 @@ class GameplayView(QWidget):
 
     def keyPressEvent(self, event):
         super().keyPressEvent(event)
-        self.keypressed.emit(event.key())
+        if event.key() == Qt.Key_X:
+            self.pressX.emit()
+        elif event.key() == Qt.Key_Z:
+            self.pressZ.emit()
+        elif event.key() == Qt.Key_Up:
+            self.pressUp.emit()
+        elif event.key() == Qt.Key_Down:
+            self.pressDown.emit()
+        elif event.key() == Qt.Key_Right:
+            self.pressRight.emit()
+        elif event.key() == Qt.Key_Left:
+            self.pressLeft.emit()

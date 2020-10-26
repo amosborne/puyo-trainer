@@ -18,7 +18,9 @@ class EditorVC:
 
         self.view = EditorView(board_graphic, drawpile_graphics, hoverarea_graphics)
 
-        self.game_controller = GameplayVC(puzzlemodel, hoverarea, self.view.solverview)
+        self.game_controller = GameplayVC(
+            puzzlemodel, hoverarea, self.view.solverview.gameplayview
+        )
 
         self.skin = skin
         self.model = puzzlemodel

@@ -1,42 +1,60 @@
 from puyolib.puyomodel import Move, Direc
-from PyQt5.QtCore import Qt
+
+
+def apply_move(func):
+    def decorator(self):
+        if self.move is not None:
+            func(self)
+        self.move = self.hoverarea.assignMove(self.move)
+        self.view.updateView(self.draw_index)
+
+    return decorator
 
 
 class GameplayVC:
     def __init__(self, puzzlemodel, hoverarea, view):
-
-        view.keypressed.connect(lambda x: self.processKey(x))
-
         self.model = puzzlemodel
         self.hoverarea = hoverarea
         self.view = view
 
-    def processKey(self, key):
-        if key == Qt.Key_X:
-            self.move = self.move._replace(direc=self.move.direc.rotateR())
-            self.move = self.hoverarea.assignMove(self.move)
-            self.view.updateView(draw_index=self.draw_index)
+        view.pressX.connect(self.rotateRight)
+        view.pressZ.connect(self.rotateLeft)
+        view.pressRight.connect(self.shiftRight)
+        view.pressLeft.connect(self.shiftLeft)
+        view.pressUp.connect(self.revertMove)
+        view.pressDown.connect(self.makeMove)
 
-        elif key == Qt.Key_Z:
-            self.move = self.move._replace(direc=self.move.direc.rotateL())
-            self.move = self.hoverarea.assignMove(self.move)
-            self.view.updateView(draw_index=self.draw_index)
+    @apply_move
+    def rotateRight(self):
+        self.move = self.move._replace(direc=self.move.direc.rotateR())
 
-        elif key == Qt.Key_Right:
-            self.move = self.move._replace(col=self.move.col + 1)
-            self.move = self.hoverarea.assignMove(self.move)
-            self.view.updateView(draw_index=self.draw_index)
+    @apply_move
+    def rotateLeft(self):
+        self.move = self.move._replace(direc=self.move.direc.rotateL())
 
-        elif key == Qt.Key_Left:
-            self.move = self.move._replace(col=self.move.col - 1)
-            self.move = self.hoverarea.assignMove(self.move)
-            self.view.updateView(draw_index=self.draw_index)
+    @apply_move
+    def shiftRight(self):
+        self.move = self.move._replace(col=self.move.col + 1)
 
-        if key == 16777237:
-            self.model.board.applyMove(self.move)
-            self.view.updateView(draw_index=self.draw_index)
-        # if key == 16777235:  # KEY UP
-        #     print("up")
+    @apply_move
+    def shiftLeft(self):
+        self.move = self.move._replace(col=self.move.col - 1)
+
+    @apply_move
+    def makeMove(self):
+        self.model.board.applyMove(self.move)
+        self.draw_index += 1
+        if self.draw_index > len(self.model.drawpile):
+            self.move = None
+        else:
+            self.move = self._defaultMove()
+
+    def _defaultMove(self):
+        puyos = self.model.drawpile[self.draw_index - 1]
+        return Move(puyos, col=2, direc=Direc.NORTH)
+
+    def revertMove(self):
+        pass
 
     def takeControl(self):
         self.draw_index = 1
@@ -44,4 +62,4 @@ class GameplayVC:
             puyos=self.model.drawpile[self.draw_index - 1], col=2, direc=Direc.NORTH
         )
         self.hoverarea.assignMove(self.move)
-        self.view.updateView(draw_index=self.draw_index)
+        self.view.updateView(self.draw_index)
