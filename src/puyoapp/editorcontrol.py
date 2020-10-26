@@ -70,7 +70,7 @@ class EditorVC:
 
         def startSolution():
             self.view.centralWidget().setCurrentWidget(self.view.solverview)
-            self.game_controller.takeControl()
+            self.game_controller.reset()
 
         resetDrawpile()
 
@@ -88,6 +88,7 @@ class EditorVC:
 
         def exitSolver():
             self.view.centralWidget().setCurrentWidget(self.view.defineview)
+            model.board.revert()
 
         view.click_back.connect(exitSolver)
         view.click_save.connect(lambda: print("save and exit!"))

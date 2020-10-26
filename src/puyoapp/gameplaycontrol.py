@@ -49,17 +49,19 @@ class GameplayVC:
         else:
             self.move = self._defaultMove()
 
+    def revertMove(self):
+        if self.draw_index > 1:
+            self.draw_index -= 1
+            self.move = self.model.board.revertMove()
+            self.move = self.hoverarea.assignMove(self.move)
+            self.view.updateView(self.draw_index)
+
+    def reset(self):
+        self.draw_index = 1
+        self.move = self._defaultMove()
+        self.move = self.hoverarea.assignMove(self.move)
+        self.view.updateView(self.draw_index)
+
     def _defaultMove(self):
         puyos = self.model.drawpile[self.draw_index - 1]
         return Move(puyos, col=2, direc=Direc.NORTH)
-
-    def revertMove(self):
-        pass
-
-    def takeControl(self):
-        self.draw_index = 1
-        self.move = Move(
-            puyos=self.model.drawpile[self.draw_index - 1], col=2, direc=Direc.NORTH
-        )
-        self.hoverarea.assignMove(self.move)
-        self.view.updateView(self.draw_index)

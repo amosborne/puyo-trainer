@@ -1,6 +1,5 @@
 import numpy as np
 from collections import namedtuple
-from copy import deepcopy
 from pandas import DataFrame
 from puyolib.puyomodel import Puyo, Direc
 
@@ -112,7 +111,11 @@ class PuyoDrawpileElemModel(AbstractPuyoGridModel):
         return self[0 : self.shape()[0], 0 : self.shape()[1]]
 
 
+# Whenever a move is applied to the puyo board model, the move is recorded
+# alongside the board pre-application.
 class PuyoBoardModel(AbstractPuyoGridModel):
+    movelist = []
+
     def _colHeight(self, idx):
         if all(self[:, idx] != Puyo.NONE):
             return self.shape()[0]
@@ -120,6 +123,10 @@ class PuyoBoardModel(AbstractPuyoGridModel):
             return np.argmin(self[:, idx] != Puyo.NONE)
 
     def applyMove(self, move):
+
+        # First record the move and the pre-application board.
+        self.movelist.append((move, self.board.copy()))
+
         def applybyColumn(puyos, leftcol):
             for cidx, puyocol in enumerate(puyos.T):
                 puyocol = [puyo for puyo in puyocol if puyo is not Puyo.NONE]
@@ -146,6 +153,17 @@ class PuyoBoardModel(AbstractPuyoGridModel):
         elif move.direc is Direc.WEST:
             puyos = np.rot90(move.puyos.grid(), k=-1)
             applybyColumn(puyos, move.col - move.puyos.shape()[0] + 1)
+
+    def revertMove(self):
+        if self.movelist:
+            move, board = self.movelist.pop()
+            self.board = board
+            return move
+
+    def revert(self):
+        if self.movelist:
+            self.board = self.movelist[0][1]
+            self.movelist = []
 
 
 # Note: this class does not check that the drawpile elements can fit the board.
