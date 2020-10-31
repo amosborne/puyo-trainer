@@ -1,4 +1,4 @@
-from models.grid_model import AbstractGrid
+from models.grid_model import AbstractGrid, DrawElemGrid
 from models.puyo_model import Puyo
 import unittest
 
@@ -46,8 +46,8 @@ class TestAbstractGrid(unittest.TestCase):
         grid3[0, 0] = Puyo.GREEN
 
         # assess difference, equality, and reset
-        self.assertEqual(grid1 - grid3, {Puyo.RED})
-        self.assertEqual(grid3 - grid1, {Puyo.GREEN})
+        self.assertEqual(grid1 - grid3, {((0, 0), Puyo.RED)})
+        self.assertEqual(grid3 - grid1, {((0, 0), Puyo.GREEN)})
         self.assertTrue(grid1 == grid2)
         self.assertFalse(grid1 == grid3)
         self.assertTrue(grid1.reset() == grid3.reset())
@@ -68,3 +68,22 @@ class TestAbstractGrid(unittest.TestCase):
 
         predict_adj = {((1, 0), Puyo.RED), ((0, 1), Puyo.GREEN)}
         self.assertEqual(predict_adj, grid.adjacent((0, 0)))
+
+
+class TestDrawElemGrid(unittest.TestCase):
+    def test_new(self):
+        rsize, csize = (2, 2)
+        grid1 = DrawElemGrid.new(size=(rsize, csize))
+        grid2 = DrawElemGrid.new(size=(rsize, csize))
+
+        grid2[0, 0] = Puyo.NONE
+        grid2[1, 0] = Puyo.GARBAGE
+        grid2[0, 1] = Puyo.GARBAGE
+        self.assertTrue(grid1 == grid2)
+
+        grid2[0, :] = Puyo.BLUE
+        predict_diff = {((0, 0), Puyo.BLUE), ((0, 1), Puyo.BLUE)}
+        self.assertEqual(predict_diff, grid2 - grid1)
+
+        grid2.reset()
+        self.assertEqual({((0, 0), Puyo.BLUE)}, grid2 - grid1)

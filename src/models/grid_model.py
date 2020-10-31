@@ -9,14 +9,12 @@ class AbstractGrid:
     An abstract grid holds a grid of puyos, potentially with hidden rows.
     Supports setting by slicing, getting by individual subscripts, iteration,
     equality, and the difference operator.
-
     """
 
     GridElem = namedtuple("GridElem", "pos, puyo")
 
     def __init__(self, board, nhide):
         self.board = board
-        self.reset()
         self.nhide = nhide
 
     @classmethod
@@ -28,12 +26,9 @@ class AbstractGrid:
             size (tuple(int,int)): Size of the visible board.
             nhide (int): Number of hidden rows above the visible board.
         """
-        assert all(sz >= 0 for sz in size)
-        assert nhide >= 0
-
         fullsize = (size[0] + nhide, size[1])
         board = np.empty(fullsize).astype(Puyo)
-        return cls(board, nhide)
+        return cls(board, nhide).reset()
 
     def __setitem__(self, subscript, value):
         self.board[subscript] = value
@@ -64,7 +59,7 @@ class AbstractGrid:
 
     def __sub__(self, other):
         """Return the grid elements in self that are different from other."""
-        return set([elem.puyo for elem in self if elem.puyo is not other[elem.pos]])
+        return set([elem for elem in self if elem.puyo is not other[elem.pos]])
 
     def __eq__(self, other):
         return len(self - other) == 0
@@ -73,7 +68,7 @@ class AbstractGrid:
         return not self == other
 
     def reset(self):
-        """Set all grid elements to none."""
+        """Return self will all grid elements set to none."""
         self[:] = Puyo.NONE
         return self
 
@@ -91,26 +86,38 @@ class AbstractGrid:
         return set([elem for elem in self if Direc.adj_direc(subscript, elem.pos)])
 
 
-class PuyoDrawpileElemModel(AbstractGrid):
-    def __init__(self, size):
-        super().__init__(size, nhide=0)
+class DrawElemGrid(AbstractGrid):
+    """
+    A grid representing the puyos to be drawn from the drawpile. Setting elements
+    is additionally restricted: the size must be at least (2,1), no puyos may be
+    garbage, and the two bottom-left puyos must be a color. Attempting to set an
+    invalid puyo will do nothing (during initialization a valid puyo is assumed).
+    """
 
-    # Drawpile elements are restricted from having certain puyos in
-    # specific positions (assumes a minimum size of (2,1)).
-    def __setitem__(self, key, value):
-        self.board[key] = value
+    @classmethod
+    def new(cls, size):
+        """Calls super constructor with zero hidden rows."""
+        assert size > (2, 1)
+        return super().new(size, nhide=0)
+
+    def __setitem__(self, subscript, value):
+        old_board = self.board.copy()
+        super().__setitem__(subscript, value)
+
         for elem in self:
-            if self.restrict(elem.pos, elem.puyo):
-                puyo = elem.puyo
-                while self.restrict(elem.pos, puyo):
-                    puyo = puyo.next(lambda puyo: not self.restrict(elem.pos, puyo))
-                self.board[elem.pos] = puyo
+            cond = self._cond(elem.pos)
+            if not cond(elem.puyo):
+                old_elem = old_board[elem.pos]
+                if isinstance(old_elem, Puyo):
+                    self.board[elem.pos] = old_elem
+                else:
+                    self.board[elem.pos] = elem.puyo.next_(cond=cond)
 
-    def restrict(self, pos, puyo):
-        if pos in {(0, 0), (1, 0)} and puyo is Puyo.NONE:
-            return True
-        elif puyo is Puyo.GARBAGE:
-            return True
+    def _cond(self, pos):
+        if pos in {(0, 0), (1, 0)}:
+            return lambda puyo: puyo is not Puyo.NONE and puyo is not Puyo.GARBAGE
+        else:
+            return lambda puyo: puyo is not Puyo.GARBAGE
 
     def shape(self):
         row_sz, col_sz = (0, 0)
@@ -123,6 +130,13 @@ class PuyoDrawpileElemModel(AbstractGrid):
 
     def grid(self):
         return self[0 : self.shape()[0], 0 : self.shape()[1]]
+
+    def reorient(self, direc):
+        """
+        Assuming self is north oriented, return a new abstract grid that is
+        reoriented to the given direction (by rotation).
+        """
+        pass
 
 
 # Whenever a move is applied to the puyo board model, the move is recorded
