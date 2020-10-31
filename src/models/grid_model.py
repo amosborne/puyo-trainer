@@ -1,7 +1,7 @@
 import numpy as np
 from collections import namedtuple
 from pandas import DataFrame
-from puyolib.puyomodel import Puyo, Direc
+from models.puyo_model import Puyo, Direc
 
 
 PuyoGridElem = namedtuple("PuyoGridElem", "pos, puyo")
@@ -10,31 +10,51 @@ PuyoGridElem = namedtuple("PuyoGridElem", "pos, puyo")
 # A class structure for controlling and interrogating a grid of puyos.
 class AbstractPuyoGridModel:
     def __init__(self, size, nhide):
+        assert all(sz >= 0 for sz in size)
+        assert nhide >= 0
+
         fullsize = (size[0] + nhide, size[1])
         self.board = np.empty(fullsize).astype(Puyo)
         self.reset()
         self.nhide = nhide
 
+    def _subGridModel(self, sub_board, sub_nhide):
+        self.board = sub_board
+        self.nhide = sub_nhide
+
     def __iter__(self):
         return (PuyoGridElem(pos, puyo) for (pos, puyo) in np.ndenumerate(self.board))
 
-    def __getitem__(self, key):
-        return self.board[key]
+    def __getitem__(self, subscript):
+        has_slice = any([isinstance(ax_sub, slice) for ax_sub in subscript])
+        unit_step = all(
+            [
+                ax_sub.step == 1 or ax_sub.step is None
+                for ax_sub in subscript
+                if isinstance(ax_sub, slice)
+            ]
+        )
+        if has_slice and not unit_step:
+            raise RuntimeError("PuyoGridModels may not be sliced non-contiguously.")
+        else:
+            sub_nhide = 0  # add check if hidden
+            print(subscript)
+            return self._subGridModel(self.board[subscript], sub_nhide)
 
-    def __setitem__(self, key, value):
-        self.board[key] = value
+    def __setitem__(self, subscript, value):
+        self.board[subscript] = value
 
     def __str__(self):
         board_flipped = np.flipud(self.board)
         height, width = board_flipped.shape
 
         col_names = ["c" + str(i + 1) for i in range(width)]
-        row_names1 = ["r" + str(i + 1) for i in range(height - self.nhide)]
-        row_names2 = ["h" + str(i + 1) for i in range(self.nhide)]
+        row_names1 = ["r" + str(i + 1) for i in reversed(range(height - self.nhide))]
+        row_names2 = ["h" + str(i + 1) for i in reversed(range(self.nhide))]
 
         dataframe = DataFrame(board_flipped)
         dataframe.columns = col_names
-        dataframe.index = row_names2 + list(reversed(row_names1))
+        dataframe.index = row_names2 + row_names1
 
         return dataframe.__str__()
 
