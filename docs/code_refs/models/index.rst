@@ -2,13 +2,13 @@ Enumerations and Data Models
 ============================
 
 .. autoclass:: models.grid_model.AbstractGrid
-   :members: new, reset, shape, is_hidden, adjacent
+   :members: new, reset, shape, tight_shape, is_hidden, adjacent
 
 .. autoclass:: models.grid_model.DrawElemGrid
    :show-inheritance:
-   :members: new, cond, reorient, shape
+   :members: new, cond, reorient
 
-.. autoclass:: models.puyo_model.Move
+.. autoclass:: models.grid_model.Move
    :members: grid_with_offsets
 
 .. autoclass:: models.puyo_model.Puyo

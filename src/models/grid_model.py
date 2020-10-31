@@ -77,6 +77,17 @@ class AbstractGrid:
         """Return the shape of the entire grid, including hidden rows."""
         return self.board.shape
 
+    @property
+    def tight_shape(self):
+        """Return the tight shape of the grid by ignoring bounding empty elements."""
+        row_sz, col_sz = (0, 0)
+        for elem in self:
+            if elem.puyo is not Puyo.NONE:
+                row_sz = elem.pos[0] if elem.pos[0] > row_sz else row_sz
+                col_sz = elem.pos[1] if elem.pos[1] > col_sz else col_sz
+
+        return (row_sz + 1, col_sz + 1)
+
     def is_hidden(self, subscript):
         """Return True if the element position is in a hidden row."""
         return subscript[0] >= self.board.shape[0] - self.nhide
@@ -84,6 +95,18 @@ class AbstractGrid:
     def adjacent(self, subscript):
         """Return the set of adjacent grid elements to the element position."""
         return set([elem for elem in self if Direc.adj_direc(subscript, elem.pos)])
+
+    def gravitize(self):
+        """Apply gravity on the grid to cause floating puyos to fall. Return self."""
+        for c, col in enumerate(self.board.T):
+            h = 0
+            for puyo in col:
+                if puyo is not Puyo.NONE:
+                    self.board[h, c] = puyo
+                    h += 1
+            self.board[h:, c] = Puyo.NONE
+
+        return self
 
 
 class DrawElemGrid(AbstractGrid):
@@ -120,23 +143,12 @@ class DrawElemGrid(AbstractGrid):
         else:
             return lambda puyo: puyo is not Puyo.GARBAGE
 
-    @property
-    def shape(self):
-        """Return the tight shape of the grid by ignoring bounding empty elements."""
-        row_sz, col_sz = (0, 0)
-        for elem in self:
-            if elem.puyo is not Puyo.NONE:
-                row_sz = elem.pos[0] if elem.pos[0] > row_sz else row_sz
-                col_sz = elem.pos[1] if elem.pos[1] > col_sz else col_sz
-
-        return (row_sz + 1, col_sz + 1)
-
     def reorient(self, direc):
         """
         Assuming self is north oriented, return a new grid that is
         reoriented to the given direction (by rotation).
         """
-        grid = DrawElemGrid(board=self.board.copy(), nhide=0)
+        grid = AbstractGrid(board=self.board.copy(), nhide=0)
 
         if direc is Direc.EAST:
             grid.board = np.rot90(grid.board)
@@ -271,3 +283,50 @@ class PuyoHoverAreaModel(AbstractGrid):
 
         self[rslice, cslice] = puyos
         return move
+
+
+class Move:
+    """
+    A move is the position and orientation of the puyos about to be dropped.
+    Supports equality, including rotationally equivalent moves.
+    
+    Args:
+        puyos (DrawElemGrid): The puyo grid in its north orientation.
+        col (int): The column the bottom-left puyo will be dropped
+            in to.
+        direc (Direc): The orientation of the puyo grid.
+    """
+
+    def __init__(self, puyos, col, direc):
+        self.puyos = puyos
+        self.col = col
+        self.direc = direc
+
+    def __eq__(self, move):
+        return False
+
+    def __ne__(self, move):
+        return not self.__eq__(move)
+
+    def grid_with_offsets(self):
+        """
+        Rotate the puyo grid by pivoting about the bottom-left puyo.
+
+        Returns:
+            (AbstractGrid, int, int): The puyo grid in its true
+            orientation and the row and columns offsets of the 
+            bottom-left puyo.
+        """
+        grid = self.puyos.reorient(self.direc)
+        if self.direc is Direc.NORTH:
+            roff, coff = 0, 0
+        elif self.direc is Direc.EAST:
+            roff, coff = 1 - grid.shape[1], 0
+        elif self.direc is Direc.SOUTH:
+            roff, coff = 1 - grid.shape[0], 1 - grid.shape[1]
+        elif self.direc is Direc.WEST:
+            roff, coff = 0, 1 - grid.shape[0]
+        else:
+            return None
+
+        return grid, roff, coff

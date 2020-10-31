@@ -69,6 +69,18 @@ class TestAbstractGrid(unittest.TestCase):
         predict_adj = {((1, 0), Puyo.RED), ((0, 1), Puyo.GREEN)}
         self.assertEqual(predict_adj, grid.adjacent((0, 0)))
 
+    def test_gravitize(self):
+        rsize, csize, hsize = (2, 3, 1)
+        grid1 = AbstractGrid.new(size=(rsize, csize), nhide=hsize)
+        grid1[1, 0] = Puyo.RED
+        grid1[0, 1:] = Puyo.RED
+        grid1[2, 2] = Puyo.BLUE
+
+        grid2 = AbstractGrid.new(size=(rsize, csize), nhide=hsize)
+        grid2[0, :] = Puyo.RED
+        grid2[1, 2] = Puyo.BLUE
+        self.assertTrue(grid1.gravitize(), grid2)
+
 
 class TestDrawElemGrid(unittest.TestCase):
     def test_new(self):
@@ -108,10 +120,10 @@ class TestDrawElemGrid(unittest.TestCase):
     def test_shape(self):
         rsize, csize = (3, 3)
         grid = DrawElemGrid.new(size=(rsize, csize))
-        self.assertEqual(grid.shape, (2, 1))
+        self.assertEqual(grid.tight_shape, (2, 1))
 
         grid[1, 1] = Puyo.RED
-        self.assertEqual(grid.shape, (2, 2))
+        self.assertEqual(grid.tight_shape, (2, 2))
 
         grid[0, 2] = Puyo.BLUE
-        self.assertEqual(grid.shape, (2, 3))
+        self.assertEqual(grid.tight_shape, (2, 3))

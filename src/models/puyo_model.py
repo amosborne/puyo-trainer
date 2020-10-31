@@ -84,38 +84,3 @@ class Direc(EnumCycle):
             return Direc.WEST
         else:
             return None
-
-
-class Move:
-    """
-    A move is the position and orientation of the puyos about to be dropped.
-    Supports equality, including rotationally equivalent moves.
-    
-    Args:
-        puyos (AbstractGrid): The puyo grid in its north orientation.
-        col (int, optional): The column the bottom-left puyo will be dropped
-            in to.
-        direc (Direc, optional): The orientation of the puyo grid.
-    """
-
-    def __init__(self, puyos, col=2, direc=Direc.NORTH):
-        self.puyos = puyos
-        self.col = col
-        self.direc = direc
-
-    def __eq__(self, move):
-        return False
-
-    def __ne__(self, move):
-        return not self.__eq__(move)
-
-    def grid_with_offsets(self):
-        """
-        Rotate the puyo grid by pivoting about the bottom-left puyo.
-
-        Returns:
-            (AbstractGrid, int, int): The puyo grid in its true
-            orientation and the row and columns offsets of the 
-            bottom-left puyo.
-        """
-        pass
