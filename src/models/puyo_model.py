@@ -29,8 +29,9 @@ class EnumCycle(Enum):
         if k == 0:
             return self
 
+        enum = self
         for _ in range(abs(k)):
-            enum = self._next(fwd=k > 0)
+            enum = enum._next(fwd=k > 0)
             if cond is not None:
                 while not cond(enum):
                     enum = enum._next(fwd=k > 0)
@@ -39,7 +40,7 @@ class EnumCycle(Enum):
 
 
 class Puyo(EnumCycle):
-    """A single puyo (red, yellow, green, blue, purple, garbage, and none)."""
+    """A single puyo (order: red, yellow, green, blue, purple, garbage, and none)."""
 
     NONE = auto()
     RED = auto()
@@ -65,11 +66,11 @@ class Direc(EnumCycle):
 
     def rotate_cw(self):
         """Rotate clockwise (once)."""
-        self.next_()
+        return self.next_()
 
     def rotate_ccw(self):
         """Rotate counter-clockwise (once)."""
-        self.next_(k=-1)
+        return self.next_(k=-1)
 
 
 class Move:

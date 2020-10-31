@@ -1,5 +1,5 @@
 test:
-	PYTHONPATH=./src python -m unittest discover test
+	PYTHONPATH=./src python -m unittest discover -v test
 
 docs: clean
 	pip freeze > requirements.txt
