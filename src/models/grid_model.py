@@ -105,7 +105,7 @@ class DrawElemGrid(AbstractGrid):
         super().__setitem__(subscript, value)
 
         for elem in self:
-            cond = self._cond(elem.pos)
+            cond = self.cond(elem.pos)
             if not cond(elem.puyo):
                 old_elem = old_board[elem.pos]
                 if isinstance(old_elem, Puyo):
@@ -113,7 +113,8 @@ class DrawElemGrid(AbstractGrid):
                 else:
                     self.board[elem.pos] = elem.puyo.next_(cond=cond)
 
-    def _cond(self, pos):
+    def cond(self, pos):
+        """For the given position, return the conditional function for a valid puyo."""
         if pos in {(0, 0), (1, 0)}:
             return lambda puyo: puyo is not Puyo.NONE and puyo is not Puyo.GARBAGE
         else:
@@ -136,7 +137,20 @@ class DrawElemGrid(AbstractGrid):
         Assuming self is north oriented, return a new abstract grid that is
         reoriented to the given direction (by rotation).
         """
-        pass
+        grid = DrawElemGrid(board=self.board.copy(), nhide=0)
+
+        if direc is Direc.EAST:
+            grid.board = np.rot90(grid.board)
+        elif direc is Direc.SOUTH:
+            grid.board = np.rot90(grid.board, k=2)
+        elif direc is Direc.WEST:
+            grid.board = np.rot90(grid.board, k=-1)
+        elif direc is Direc.NORTH:
+            pass
+        else:
+            return None
+
+        return grid
 
 
 # Whenever a move is applied to the puyo board model, the move is recorded

@@ -1,5 +1,5 @@
 from models.grid_model import AbstractGrid, DrawElemGrid
-from models.puyo_model import Puyo
+from models.puyo_model import Puyo, Direc
 import unittest
 
 
@@ -87,3 +87,20 @@ class TestDrawElemGrid(unittest.TestCase):
 
         grid2.reset()
         self.assertEqual({((0, 0), Puyo.BLUE)}, grid2 - grid1)
+
+    def test_reorient(self):
+        rsize, csize = (2, 2)
+        grid1 = DrawElemGrid.new(size=(rsize, csize))
+        grid2 = AbstractGrid.new(size=(rsize, csize), nhide=0)
+
+        grid2[:, 0] = Puyo.RED
+        self.assertTrue(grid1.reorient(Direc.NORTH), grid2)
+
+        grid2.reset()[1, :] = Puyo.RED
+        self.assertTrue(grid1.reorient(Direc.EAST), grid2)
+
+        grid2.reset()[:, 1] = Puyo.RED
+        self.assertTrue(grid1.reorient(Direc.SOUTH), grid2)
+
+        grid2.reset()[0, :] = Puyo.RED
+        self.assertTrue(grid1.reorient(Direc.WEST), grid2)
