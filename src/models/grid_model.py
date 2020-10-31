@@ -4,45 +4,49 @@ from pandas import DataFrame
 from models.puyo_model import Puyo, Direc
 
 
-PuyoGridElem = namedtuple("PuyoGridElem", "pos, puyo")
+class AbstractGrid:
+    """
+    An abstract grid holds a grid of puyos, potentially with hidden rows.
+    Supports setting by slicing, getting by individual subscripts, iteration,
+    equality, and the difference operator.
 
+    """
 
-# A class structure for controlling and interrogating a grid of puyos.
-class AbstractPuyoGridModel:
-    def __init__(self, size, nhide):
+    GridElem = namedtuple("GridElem", "pos, puyo")
+
+    def __init__(self, board, nhide):
+        self.board = board
+        self.reset()
+        self.nhide = nhide
+
+    @classmethod
+    def new(cls, size, nhide):
+        """
+        Create a new abstract grid.
+
+        Args:
+            size (tuple(int,int)): Size of the visible board.
+            nhide (int): Number of hidden rows above the visible board.
+        """
         assert all(sz >= 0 for sz in size)
         assert nhide >= 0
 
         fullsize = (size[0] + nhide, size[1])
-        self.board = np.empty(fullsize).astype(Puyo)
-        self.reset()
-        self.nhide = nhide
-
-    def _subGridModel(self, sub_board, sub_nhide):
-        self.board = sub_board
-        self.nhide = sub_nhide
-
-    def __iter__(self):
-        return (PuyoGridElem(pos, puyo) for (pos, puyo) in np.ndenumerate(self.board))
-
-    def __getitem__(self, subscript):
-        has_slice = any([isinstance(ax_sub, slice) for ax_sub in subscript])
-        unit_step = all(
-            [
-                ax_sub.step == 1 or ax_sub.step is None
-                for ax_sub in subscript
-                if isinstance(ax_sub, slice)
-            ]
-        )
-        if has_slice and not unit_step:
-            raise RuntimeError("PuyoGridModels may not be sliced non-contiguously.")
-        else:
-            sub_nhide = 0  # add check if hidden
-            print(subscript)
-            return self._subGridModel(self.board[subscript], sub_nhide)
+        board = np.empty(fullsize).astype(Puyo)
+        return cls(board, nhide)
 
     def __setitem__(self, subscript, value):
         self.board[subscript] = value
+
+    def __iter__(self):
+        return (self.GridElem(pos, puyo) for (pos, puyo) in np.ndenumerate(self.board))
+
+    def __getitem__(self, subscript):
+        has_slice = any([isinstance(ax_sub, slice) for ax_sub in subscript])
+        if has_slice:
+            raise RuntimeError("AbstractGrid does not support slice access.")
+        else:
+            return self.board[subscript]
 
     def __str__(self):
         board_flipped = np.flipud(self.board)
@@ -58,43 +62,36 @@ class AbstractPuyoGridModel:
 
         return dataframe.__str__()
 
-    # Subtraction of two puyo grid models (assuming the same full size)
-    # returns the set of (pos, puyo) for which self has a puyo and other
-    # does not. This is primarily intended for determining ghost puyo
-    # locations given a post-move and pre-move puyo board model.
     def __sub__(self, other):
-        delta = set()
+        """Return the grid elements in self that are different from other."""
+        return set([elem.puyo for elem in self if elem.puyo is not other[elem.pos]])
 
-        for elem in self:
-            other_puyo = other[elem.pos]
-            if elem.puyo is not Puyo.NONE and other_puyo is Puyo.NONE:
-                delta.add(elem)
+    def __eq__(self, other):
+        return len(self - other) == 0
 
-        return delta
-
-    def shape(self):
-        return self.board.shape
-
-    def grid(self):
-        return self.board
+    def __ne__(self, other):
+        return not self == other
 
     def reset(self):
+        """Set all grid elements to none."""
         self[:] = Puyo.NONE
+        return self
 
-    def isHidden(self, key):
-        return key[0] >= self.board.shape[0] - self.nhide
+    @property
+    def shape(self):
+        """Return the shape of the entire grid, including hidden rows."""
+        return self.board.shape
 
-    def getAdjacent(self, key):
-        adj = set()
+    def is_hidden(self, subscript):
+        """Return True if the element position is in a hidden row."""
+        return subscript[0] >= self.board.shape[0] - self.nhide
 
-        for elem in self:
-            if elem.puyo is not Puyo.NONE and adjacency_direction(key, elem.pos):
-                adj.add(elem)
-
-        return adj
+    def adjacent(self, subscript):
+        """Return the set of adjacent grid elements to the element position."""
+        return set([elem for elem in self if Direc.adj_direc(subscript, elem.pos)])
 
 
-class PuyoDrawpileElemModel(AbstractPuyoGridModel):
+class PuyoDrawpileElemModel(AbstractGrid):
     def __init__(self, size):
         super().__init__(size, nhide=0)
 
@@ -130,7 +127,7 @@ class PuyoDrawpileElemModel(AbstractPuyoGridModel):
 
 # Whenever a move is applied to the puyo board model, the move is recorded
 # alongside the board pre-application.
-class PuyoBoardModel(AbstractPuyoGridModel):
+class PuyoBoardModel(AbstractGrid):
     def __init__(self, size, nhide):
         super().__init__(size, nhide)
         self.movelist = []
@@ -186,7 +183,7 @@ class PuyoBoardModel(AbstractPuyoGridModel):
 
 
 # Note: this class does not check that the drawpile elements can fit the board.
-class PuyoHoverAreaModel(AbstractPuyoGridModel):
+class PuyoHoverAreaModel(AbstractGrid):
     def __init__(self, board, drawpile_elem):
         size = (2 * max(drawpile_elem.board.shape) - 1, board.shape()[1])
         super().__init__(size, nhide=0)
@@ -247,16 +244,3 @@ class PuyoHoverAreaModel(AbstractPuyoGridModel):
 
         self[rslice, cslice] = puyos
         return move
-
-
-def adjacency_direction(pos1, pos2):
-    if pos1[1] == pos2[1] and pos1[0] + 1 == pos2[0]:
-        return Direc.NORTH
-    elif pos1[1] == pos2[1] and pos1[0] - 1 == pos2[0]:
-        return Direc.SOUTH
-    elif pos1[0] == pos2[0] and pos1[1] + 1 == pos2[1]:
-        return Direc.EAST
-    elif pos1[0] == pos2[0] and pos1[1] - 1 == pos2[1]:
-        return Direc.WEST
-    else:
-        return None

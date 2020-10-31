@@ -1,5 +1,4 @@
 from enum import Enum, auto
-from collections import namedtuple
 
 
 class EnumCycle(Enum):
@@ -72,13 +71,28 @@ class Direc(EnumCycle):
         """Rotate counter-clockwise (once)."""
         return self.next_(k=-1)
 
+    @classmethod
+    def adj_direc(cls, pos1, pos2):
+        """Return the enum which points from **pos1** to **pos2** (or none)."""
+        if pos1[1] == pos2[1] and pos1[0] + 1 == pos2[0]:
+            return Direc.NORTH
+        elif pos1[1] == pos2[1] and pos1[0] - 1 == pos2[0]:
+            return Direc.SOUTH
+        elif pos1[0] == pos2[0] and pos1[1] + 1 == pos2[1]:
+            return Direc.EAST
+        elif pos1[0] == pos2[0] and pos1[1] - 1 == pos2[1]:
+            return Direc.WEST
+        else:
+            return None
+
 
 class Move:
     """
     A move is the position and orientation of the puyos about to be dropped.
+    Supports equality, including rotationally equivalent moves.
     
     Args:
-        puyos (AbstractGridModel): The puyo grid in its north orientation.
+        puyos (AbstractGrid): The puyo grid in its north orientation.
         col (int, optional): The column the bottom-left puyo will be dropped
             in to.
         direc (Direc, optional): The orientation of the puyo grid.
@@ -90,7 +104,6 @@ class Move:
         self.direc = direc
 
     def __eq__(self, move):
-        """Equality includes rotationally equivalent moves."""
         return False
 
     def __ne__(self, move):
@@ -101,7 +114,7 @@ class Move:
         Rotate the puyo grid by pivoting about the bottom-left puyo.
 
         Returns:
-            (AbstractGridModel, int, int): The puyo grid in its true
+            (AbstractGrid, int, int): The puyo grid in its true
             orientation and the row and columns offsets of the 
             bottom-left puyo.
         """

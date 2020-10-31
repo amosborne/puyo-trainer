@@ -29,3 +29,10 @@ class TestEnums(unittest.TestCase):
         self.assertEqual(Direc.SOUTH.rotate_cw(), Direc.WEST)
         self.assertEqual(Direc.WEST.rotate_cw(), Direc.NORTH)
         self.assertEqual(Direc.NORTH.rotate_ccw(), Direc.WEST)
+
+        # adjacent direction
+        self.assertEqual(Direc.NORTH, Direc.adj_direc((1, 1), (2, 1)))
+        self.assertEqual(Direc.EAST, Direc.adj_direc((1, 1), (1, 2)))
+        self.assertEqual(Direc.SOUTH, Direc.adj_direc((1, 1), (0, 1)))
+        self.assertEqual(Direc.WEST, Direc.adj_direc((1, 1), (1, 0)))
+        self.assertEqual(None, Direc.adj_direc((1, 1), (2, 2)))
