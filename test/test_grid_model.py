@@ -104,3 +104,14 @@ class TestDrawElemGrid(unittest.TestCase):
 
         grid2.reset()[0, :] = Puyo.RED
         self.assertTrue(grid1.reorient(Direc.WEST), grid2)
+
+    def test_shape(self):
+        rsize, csize = (3, 3)
+        grid = DrawElemGrid.new(size=(rsize, csize))
+        self.assertEqual(grid.shape, (2, 1))
+
+        grid[1, 1] = Puyo.RED
+        self.assertEqual(grid.shape, (2, 2))
+
+        grid[0, 2] = Puyo.BLUE
+        self.assertEqual(grid.shape, (2, 3))

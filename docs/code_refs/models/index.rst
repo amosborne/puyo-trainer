@@ -6,7 +6,7 @@ Enumerations and Data Models
 
 .. autoclass:: models.grid_model.DrawElemGrid
    :show-inheritance:
-   :members: new, cond, reorient
+   :members: new, cond, reorient, shape
 
 .. autoclass:: models.puyo_model.Move
    :members: grid_with_offsets

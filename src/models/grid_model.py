@@ -120,7 +120,9 @@ class DrawElemGrid(AbstractGrid):
         else:
             return lambda puyo: puyo is not Puyo.GARBAGE
 
+    @property
     def shape(self):
+        """Return the tight shape of the grid by ignoring bounding empty elements."""
         row_sz, col_sz = (0, 0)
         for elem in self:
             if elem.puyo is not Puyo.NONE:
@@ -129,12 +131,9 @@ class DrawElemGrid(AbstractGrid):
 
         return (row_sz + 1, col_sz + 1)
 
-    def grid(self):
-        return self[0 : self.shape()[0], 0 : self.shape()[1]]
-
     def reorient(self, direc):
         """
-        Assuming self is north oriented, return a new abstract grid that is
+        Assuming self is north oriented, return a new grid that is
         reoriented to the given direction (by rotation).
         """
         grid = DrawElemGrid(board=self.board.copy(), nhide=0)
