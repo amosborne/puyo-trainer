@@ -336,37 +336,9 @@ class Move:
         self.direc = direc
 
     def __eq__(self, move):
-        this_grid, _, this_coff = self.grid_with_offsets()
-        that_grid, _, that_coff = move.grid_with_offsets()
-        # print(this_grid)
-        # print(that_grid)
-        if (this_coff + self.col) == (that_coff + move.col):
-            return this_grid.gravitize() == that_grid.gravitize()
-        else:
-            return False
+        grid1, coff1 = self.puyos.finalize(self.direc)
+        grid2, coff2 = move.puyos.finalize(move.direc)
+        return (grid1 == grid2) and (coff1 + self.col == coff2 + move.col)
 
     def __ne__(self, move):
         return not self.__eq__(move)
-
-    def grid_with_offsets(self):
-        """
-        Rotate the puyo grid by pivoting about the bottom-left puyo.
-
-        Returns:
-            (AbstractGrid, int, int): The puyo grid in its true
-            orientation and the row and columns offsets of the 
-            bottom-left puyo.
-        """
-        grid = self.puyos.reorient(self.direc)
-        if self.direc is Direc.NORTH:
-            roff, coff = 0, 0
-        elif self.direc is Direc.EAST:
-            roff, coff = 1 - grid.tight_shape[1], 0
-        elif self.direc is Direc.SOUTH:
-            roff, coff = 1 - grid.tight_shape[0], 1 - grid.tight_shape[1]
-        elif self.direc is Direc.WEST:
-            roff, coff = 0, 1 - grid.tight_shape[0]
-        else:
-            return None
-
-        return grid, roff, coff

@@ -179,29 +179,26 @@ class TestDrawElemGrid(unittest.TestCase):
         self.assertEqual(result, predict)
 
 
-# class TestMove(unittest.TestCase):
-#     def test_equality(self):
-#         return
-#         # only gravity
-#         grid1 = DrawElemGrid.new(size=(3, 3))
-#         grid1[0, 0:2] = Puyo.PURPLE
-#         grid1[1, 0] = Puyo.GREEN
-#         grid1[2, 1] = Puyo.BLUE
-#         move1 = Move(puyos=grid1, col=2, direc=Direc.NORTH)
+class TestMove(unittest.TestCase):
+    def test_equality(self):
+        # only gravity
+        grid1 = DrawElemGrid.new(shape=(3, 3))
+        grid1[0, 0:2] = Puyo.PURPLE
+        grid1[1, 0] = Puyo.GREEN
+        grid1[2, 1] = Puyo.BLUE
+        move1 = Move(puyos=grid1, col=3, direc=Direc.NORTH)
 
-#         grid2 = DrawElemGrid.new(size=(3, 3))
-#         grid2[0, 0:2] = Puyo.PURPLE
-#         grid2[1, 0] = Puyo.GREEN
-#         grid2[1, 1] = Puyo.BLUE
-#         move2 = Move(puyos=grid2, col=2, direc=Direc.NORTH)
+        grid2 = DrawElemGrid.new(shape=(3, 3))
+        grid2[0, 0:2] = Puyo.PURPLE
+        grid2[1, 0] = Puyo.GREEN
+        grid2[1, 1] = Puyo.BLUE
+        move2 = Move(puyos=grid2, col=3, direc=Direc.NORTH)
+        self.assertTrue(move1 == move2)
 
-#         self.assertTrue(move1 == move2)
-
-#         # with rotation and offset
-#         grid2 = DrawElemGrid.new(size=(3, 3))
-#         grid2[1, 0:2] = Puyo.PURPLE
-#         grid2[0, 1] = Puyo.GREEN
-#         grid2[0, 0] = Puyo.BLUE
-#         move2 = Move(puyos=grid2, col=3, direc=Direc.SOUTH)
-
-#         self.assertTrue(move1 == move2)
+        # with rotation and offset
+        grid2 = DrawElemGrid.new(shape=(3, 3))
+        grid2[1, 0:2] = Puyo.PURPLE
+        grid2[0, 1] = Puyo.GREEN
+        grid2[0, 0] = Puyo.BLUE
+        move2 = Move(puyos=grid2, col=4, direc=Direc.SOUTH)
+        self.assertTrue(move1 == move2)

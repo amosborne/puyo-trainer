@@ -9,7 +9,6 @@ Enumerations and Data Models
    :members: new, cond, reorient, finalize
 
 .. autoclass:: models.grid_model.Move
-   :members: grid_with_offsets
 
 .. autoclass:: models.puyo_model.Puyo
    :show-inheritance:
