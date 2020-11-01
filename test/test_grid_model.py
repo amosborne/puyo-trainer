@@ -1,4 +1,4 @@
-from models.grid_model import AbstractGrid, DrawElemGrid, Move
+from models.grid_model import AbstractGrid, DrawElemGrid, Move, BoardGrid
 from models.puyo_model import Puyo, Direc
 import unittest
 
@@ -202,3 +202,62 @@ class TestMove(unittest.TestCase):
         grid2[0, 0] = Puyo.BLUE
         move2 = Move(puyos=grid2, col=4, direc=Direc.SOUTH)
         self.assertTrue(move1 == move2)
+
+        # a complicated move comparison
+        grid1 = DrawElemGrid.new(shape=(5, 5))
+        grid1._board[:] = Puyo.NONE
+        grid1[1, 1] = Puyo.RED
+        grid1[1, 2] = Puyo.BLUE
+        grid1[2, 3] = Puyo.GREEN
+        grid1[3, 3] = Puyo.BLUE
+        move1 = Move(puyos=grid1, col=3, direc=Direc.WEST)
+
+        grid2 = DrawElemGrid.new(shape=(5, 5))
+        grid2._board[:] = Puyo.NONE
+        grid2[3, 3] = Puyo.RED
+        grid2[4, 3] = Puyo.BLUE
+        grid2[0, 2] = Puyo.GREEN
+        grid2[0, 1] = Puyo.BLUE
+        move2 = Move(puyos=grid2, col=-1, direc=Direc.NORTH)
+        self.assertTrue(move1 == move2)
+
+
+class TestBoardGrid(unittest.TestCase):
+    def test_applysmallmove(self):
+        board = BoardGrid.new(shape=(1, 3), nhide=0)
+        drawelem = DrawElemGrid.new(shape=(2, 2))
+        drawelem[:, 0] = Puyo.RED
+
+        # left side overlap
+        move = Move(puyos=drawelem, col=-1, direc=Direc.EAST)
+        result = BoardGrid.new(shape=(1, 3), nhide=0)
+        result[0, 0] = Puyo.RED
+        self.assertEqual(board.applyMove(move), result)
+        board.revert()
+
+        # right side overlap
+        move = Move(puyos=drawelem, col=3, direc=Direc.WEST)
+        result = BoardGrid.new(shape=(1, 3), nhide=0)
+        result[0, 2] = Puyo.RED
+        self.assertEqual(board.applyMove(move), result)
+
+    def test_applybigmove(self):
+        board = BoardGrid.new(shape=(3, 3), nhide=0)
+        drawelem = DrawElemGrid.new(shape=(3, 2))
+        drawelem[0:2, 0] = Puyo.RED
+        drawelem[0, 1] = Puyo.GREEN
+        drawelem[2, 1] = Puyo.BLUE
+
+        # everything fits
+        move = Move(puyos=drawelem, col=0, direc=Direc.NORTH)
+        result = BoardGrid.new(shape=(3, 3), nhide=0)
+        result[0:2, 0] = Puyo.RED
+        result[0, 1] = Puyo.GREEN
+        result[1, 1] = Puyo.BLUE
+        self.assertEqual(board.applyMove(move), result)
+
+        # top row cutoff
+        move = Move(puyos=drawelem, col=2, direc=Direc.SOUTH)
+        result[2, 1] = Puyo.BLUE
+        result[0:2, 2] = Puyo.RED
+        self.assertEqual(board.applyMove(move), result)

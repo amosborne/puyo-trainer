@@ -89,7 +89,7 @@ class AbstractGrid:
         return set([elem for elem in self if elem.puyo is not other[elem.pos]])
 
     def __eq__(self, other):
-        return len(self - other) == 0
+        return len(self - other) == 0 and self._nhide == other._nhide
 
     def __ne__(self, other):
         return not self == other
@@ -197,65 +197,62 @@ class DrawElemGrid(AbstractGrid):
         return AbstractGrid(new_board, nhide=0), roff, coff
 
 
-# Whenever a move is applied to the puyo board model, the move is recorded
-# alongside the board pre-application.
-class PuyoBoardModel(AbstractGrid):
-    def __init__(self, size, nhide):
-        super().__init__(size, nhide)
-        self.movelist = []
+class BoardGrid(AbstractGrid):
+    """
+    A grid representing the puyos on the game board. Moves may be applied to
+    the board grid. A history of moves is recorded and the board may be reverted.
+    """
+
+    def __init__(self, shape, nhide):
+        super().__init__(shape, nhide)
+        self._movelist = []
 
     def _colHeight(self, idx):
-        if all(self[:, idx] != Puyo.NONE):
-            return self.shape()[0]
+        if all(self._board[:, idx] != Puyo.NONE):
+            return self.shape[0]
         else:
-            return np.argmin(self[:, idx] != Puyo.NONE)
+            return np.argmin(self._board[:, idx] != Puyo.NONE)
 
     def applyMove(self, move):
+        """Apply the given move to the board, return **self**."""
 
         # First record the move and the pre-application board.
-        self.movelist.append((move, self.board.copy()))
+        self._movelist.append((move, self._board.copy()))
 
         def applybyColumn(puyos, leftcol):
-            for cidx, puyocol in enumerate(puyos.T):
+            for cidx, puyocol in enumerate(puyos._board.T):
+                col_idx = cidx + leftcol
+                if col_idx < 0 or col_idx >= self.shape[1]:
+                    continue
                 puyocol = [puyo for puyo in puyocol if puyo is not Puyo.NONE]
-                rstart = self._colHeight(cidx + leftcol)
+                rstart = self._colHeight(col_idx)
                 for ridx, puyo in enumerate(puyocol):
                     rend = rstart + ridx
-                    if rend < self.shape()[0]:
-                        self[rend, cidx + leftcol] = puyo
+                    if rend < self.shape[0]:
+                        self[rend, col_idx] = puyo
                     else:
                         break
 
-        if move.direc is Direc.NORTH:
-            puyos = move.puyos.grid()
-            applybyColumn(puyos, move.col)
-
-        elif move.direc is Direc.SOUTH:
-            puyos = np.rot90(move.puyos.grid(), k=2)
-            applybyColumn(puyos, move.col - move.puyos.shape()[1] + 1)
-
-        elif move.direc is Direc.EAST:
-            puyos = np.rot90(move.puyos.grid(), k=1)
-            applybyColumn(puyos, move.col)
-
-        elif move.direc is Direc.WEST:
-            puyos = np.rot90(move.puyos.grid(), k=-1)
-            applybyColumn(puyos, move.col - move.puyos.shape()[0] + 1)
+        puyos, _, coff = move.puyos.reorient(move.direc)
+        applybyColumn(puyos, coff + move.col)
+        return self
 
     def revertMove(self):
+        """Revert the board by one move and return that move."""
         if self.movelist:
-            move, board = self.movelist.pop()
-            self.board = board
+            move, board = self._movelist.pop()
+            self._board = board
             return move
 
     def revert(self):
-        if self.movelist:
-            self.board = self.movelist[0][1]
-            self.movelist = []
+        """Revert the board to its initial state and return the first move."""
+        if self._movelist:
+            self._board = self._movelist[0][1]
+            self._movelist = []
 
 
 # Note: this class does not check that the drawpile elements can fit the board.
-class PuyoHoverAreaModel(AbstractGrid):
+class HoverGrid(AbstractGrid):
     def __init__(self, board, drawpile_elem):
         size = (2 * max(drawpile_elem.board.shape) - 1, board.shape()[1])
         super().__init__(size, nhide=0)

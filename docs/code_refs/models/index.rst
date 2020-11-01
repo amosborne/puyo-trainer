@@ -8,6 +8,10 @@ Enumerations and Data Models
    :show-inheritance:
    :members: new, cond, reorient, finalize
 
+.. autoclass:: models.grid_model.BoardGrid
+   :show-inheritance:
+   :members: applyMove, revertMove, revert
+             
 .. autoclass:: models.grid_model.Move
 
 .. autoclass:: models.puyo_model.Puyo
