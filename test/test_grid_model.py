@@ -155,6 +155,29 @@ class TestDrawElemGrid(unittest.TestCase):
         result = grid1.reorient(Direc.WEST)
         self.assertTrue(result == predict)
 
+    def test_finalize(self):
+        grid1 = DrawElemGrid.new(shape=(3, 3))
+        grid1[1, 1] = Puyo.PURPLE
+        grid1[2, 2] = Puyo.BLUE
+
+        result = grid1.finalize(Direc.EAST)
+        grid2 = AbstractGrid.new(shape=(2, 3), nhide=0)
+        grid2[0, 0] = Puyo.RED
+        grid2[0, 1] = Puyo.PURPLE
+        grid2[1, 1] = Puyo.RED
+        grid2[0, 2] = Puyo.BLUE
+        predict = (grid2, 0)
+        self.assertEqual(result, predict)
+
+        result = grid1.finalize(Direc.WEST)
+        grid2 = AbstractGrid.new(shape=(2, 3), nhide=0)
+        grid2[0, 1] = Puyo.RED
+        grid2[1, 1] = Puyo.PURPLE
+        grid2[0, 2] = Puyo.RED
+        grid2[0, 0] = Puyo.BLUE
+        predict = (grid2, -2)
+        self.assertEqual(result, predict)
+
 
 # class TestMove(unittest.TestCase):
 #     def test_equality(self):

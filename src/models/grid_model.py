@@ -164,7 +164,10 @@ class DrawElemGrid(AbstractGrid):
             (AbstractGrid, int): The finalized grid and resulting column
             offset relative to the bottom-left grid element.
         """
-        grid, roff, coff = self._reorient(direc)
+        reorient_grid, _, coff = self.reorient(direc)
+        reorient_grid.gravitize()
+        final_board, _, _ = AbstractGrid._tighten(reorient_grid._board)
+        return AbstractGrid(final_board, nhide=0), coff
 
     def reorient(self, direc):
         """
