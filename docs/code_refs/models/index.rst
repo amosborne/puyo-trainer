@@ -2,11 +2,11 @@ Enumerations and Data Models
 ============================
 
 .. autoclass:: models.grid_model.AbstractGrid
-   :members: new, reset, shape, tight_shape, is_hidden, adjacent
+   :members: new, shape, reset, _tighten, gravitize, is_hidden, adjacent
 
 .. autoclass:: models.grid_model.DrawElemGrid
    :show-inheritance:
-   :members: new, cond, reorient
+   :members: new, cond, reorient, finalize
 
 .. autoclass:: models.grid_model.Move
    :members: grid_with_offsets
