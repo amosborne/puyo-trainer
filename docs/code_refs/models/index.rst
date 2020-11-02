@@ -1,6 +1,9 @@
 Enumerations and Data Models
 ============================
 
+.. autoclass:: models.puzzle_module.PuzzleModule
+   :members: new, load
+
 .. autoclass:: models.grid_model.AbstractGrid
    :members: new, shape, reset, _tighten, gravitize, is_hidden, adjacent
 
@@ -11,6 +14,10 @@ Enumerations and Data Models
 .. autoclass:: models.grid_model.BoardGrid
    :show-inheritance:
    :members: applyMove, revertMove, revert
+
+.. autoclass:: models.grid_model.HoverGrid
+   :show-inheritance:
+   :members: new, assignMove
              
 .. autoclass:: models.grid_model.Move
 

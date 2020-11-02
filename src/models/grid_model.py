@@ -251,8 +251,18 @@ class BoardGrid(AbstractGrid):
             self._movelist = []
 
 
-# Note: this class does not check that the drawpile elements can fit the board.
 class HoverGrid(AbstractGrid):
+    """
+    A grid representing the puyos hovering above the game board, foreshadowing
+    a move application to the board grid. A single move may be assigned.
+    """
+
+    @classmethod
+    def new(cls, shape):
+        """Calls super constructor with zero hidden rows."""
+        assert shape > (2, 1)
+        return super().new(shape, nhide=0)
+
     def __init__(self, board, drawpile_elem):
         size = (2 * max(drawpile_elem.board.shape) - 1, board.shape()[1])
         super().__init__(size, nhide=0)
