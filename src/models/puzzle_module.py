@@ -119,13 +119,15 @@ class PuzzleModule:
         rules = []
         rules.append(self._rule_board_shape)
         rules.append(self._rule_move_shape)
-        rules.append(self._rule_move_quantity)
-        rules.append(self._rule_move_minsize_nogarbage)
+        rules.append(self._rule_move_quantity)  # has force
+        rules.append(self._rule_move_minsize_nogarbage)  # has force
+        rules.append(self._rule_color_count)
         # TODO: add rule no floating puyos or pop groups (no correction)
         self.rules = rules
 
     def _rule_board_shape(self, puzzle, force):  # no force action
-        shape = self.board_shape == puzzle.board.shape
+        visr, visc = self.board_shape
+        shape = (visr + puzzle.board.nhide, visc) == puzzle.board.shape
         nhide = self.board_nhide == puzzle.board.nhide
         return shape and nhide
 
@@ -137,8 +139,22 @@ class PuzzleModule:
             return False
         elif not puzzle.moves:
             puzzle.new_move()
+            puzzle.apply_rules(force=True)
 
         return True
+
+    def _rule_floaters_or_poppers(self, puzzle, force):  # no force action
+        pass
+
+    def _rule_color_count(self, puzzle, force):  # no force action
+        colors = puzzle.board.colors
+        for move in puzzle.moves:
+            colors |= move.grid.colors
+        colors -= {Puyo.NONE, Puyo.GARBAGE}
+        return len(colors) <= self.color_limit
+
+    def _rule_move_fit(self, puzzle, force):
+        pass
 
     @staticmethod
     def _rule_move_minsize_nogarbage(puzzle, force):

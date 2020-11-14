@@ -25,7 +25,6 @@ class Puzzle:
     def new_move(self, index=0):
         new_move = Move(shape=self.module.move_shape, col=2, direc=Direc.NORTH)
         self.moves.insert(index, new_move)
-        self.apply_rules(force=True)
 
     def __str__(self):
         def sdivider(slen, score):

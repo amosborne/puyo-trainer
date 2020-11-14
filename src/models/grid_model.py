@@ -34,6 +34,11 @@ class AbstractGrid:
         """(int, int): Shape of the grid (including hidden rows). Read-only."""
         return self._board.shape
 
+    @property
+    def colors(self):
+        """{Puyo}: Set of puyo enumerations contained in the grid."""
+        return set(self._board.flatten())
+
     @staticmethod
     def _tighten(board):
         """

@@ -5,7 +5,7 @@ Enumerations and Data Models
    :members: new, load
 
 .. autoclass:: models.grid_model.AbstractGrid
-   :members: new, shape, reset, _tighten, gravitize, is_hidden, adjacent
+   :members: new, shape, colors, reset, _tighten, gravitize, is_hidden, adjacent
 
 .. autoclass:: models.grid_model.MoveGrid
    :show-inheritance:

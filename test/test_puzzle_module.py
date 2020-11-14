@@ -1,4 +1,5 @@
 from models.puzzle_module import PuzzleModule
+from models.puyo_model import Puyo
 import unittest
 import shutil
 
@@ -10,11 +11,22 @@ class TestPuzzleModule(unittest.TestCase):
         PuzzleModule.load(name)
         teardown(name)
 
-    def test_new_puzzle(self):
+    def test_puzzle_color_limit(self):
         name = "test"
         module = buildup(name)
         puzzle = module.new_puzzle()
+
+        # test color limit
+        puzzle.board[1, 0] = Puyo.GARBAGE
+        puzzle.board[0, 0] = Puyo.GREEN
+        puzzle.board[1, 0] = Puyo.BLUE
+        puzzle.board[2, 0] = Puyo.YELLOW
+        puzzle.moves[0].grid[0, 0] = Puyo.PURPLE
+        self.assertFalse(puzzle.apply_rules())
+        puzzle.moves[0].grid[0, 0] = Puyo.RED
         print(puzzle)
+        self.assertTrue(puzzle.apply_rules())
+
         teardown(name)
 
 
