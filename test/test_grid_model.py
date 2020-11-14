@@ -1,4 +1,4 @@
-from models.grid_model import AbstractGrid, BoardGrid, MoveGrid, Move
+from models.grid_model import AbstractGrid, BoardGrid, MoveGrid, HoverGrid, Move
 from models.puyo_model import Puyo, Direc
 import unittest
 
@@ -197,6 +197,23 @@ class TestMove(unittest.TestCase):
         move2.grid[0, 2] = Puyo.GREEN
         move2.grid[0, 1] = Puyo.BLUE
         self.assertTrue(move1 == move2)
+
+
+class TestHoverGrid(unittest.TestCase):
+    def test_fitmove(self):
+        grid = HoverGrid.new(board_shape=(3, 3), move_shape=(2, 1))
+
+        lover_move = Move(shape=(2, 2), col=0, direc=Direc.SOUTH)
+        lover_move.grid[:] = Puyo.RED
+        lfit_move = Move(shape=(2, 2), col=1, direc=Direc.SOUTH)
+        lfit_move.grid[:] = Puyo.RED
+        self.assertEqual(grid.fit_move(lover_move), lfit_move)
+
+        rover_move = Move(shape=(2, 2), col=3, direc=Direc.NORTH)
+        rover_move.grid[:] = Puyo.RED
+        rfit_move = Move(shape=(2, 2), col=1, direc=Direc.NORTH)
+        rfit_move.grid[:] = Puyo.RED
+        self.assertEqual(grid.fit_move(rover_move), rfit_move)
 
 
 class TestBoardGrid(unittest.TestCase):

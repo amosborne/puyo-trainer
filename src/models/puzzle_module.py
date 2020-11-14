@@ -25,6 +25,7 @@ class PuzzleModule:
     - Each move shall have a minimum non-empty shape of (2, 1).
     - Each move shall not contain any garbage.
     - Each move shall fit the board horizontally.
+    - A puzzle shall have atleast one move.
     """
 
     @staticmethod
@@ -112,14 +113,14 @@ class PuzzleModule:
     def _specify_rules(self):
         """
         Rules are a list of functions with the signature rule(puzzle, force).
-        If force is True, then the rule will take corrective action, if possible.
+        If force is True, then the rule will may take corrective action.
         The return value is whether the puzzle is compliant upon function return.
         """
         rules = []
         rules.append(self._rule_board_shape)
         rules.append(self._rule_move_shape)
+        rules.append(self._rule_move_quantity)
         rules.append(self._rule_move_minsize_nogarbage)
-        # TODO: add rule for minimum two moves (with correction)
         # TODO: add rule no floating puyos or pop groups (no correction)
         self.rules = rules
 
@@ -131,9 +132,17 @@ class PuzzleModule:
     def _rule_move_shape(self, puzzle, force):  # no force action
         return all([self.move_shape == move.shape for move in puzzle.moves])
 
+    def _rule_move_quantity(self, puzzle, force):
+        if not puzzle.moves and not force:
+            return False
+        elif not puzzle.moves:
+            puzzle.new_move()
+
+        return True
+
     @staticmethod
     def _rule_move_minsize_nogarbage(puzzle, force):
-        mv_elems = [[(mv.grid, elem) for elem in mv.grid] for mv in puzzle.moves]
+        mv_elems = [(mv.grid, elem) for mv in puzzle.moves for elem in mv.grid]
 
         for grid, elem in mv_elems:
 
@@ -143,6 +152,7 @@ class PuzzleModule:
                     return False
                 else:
                     puyo = elem.puyo.next_(cond=lambda p: p is not Puyo.GARBAGE)
+                    grid[elem.pos] = puyo
 
             # minimum size rule
             if elem.pos in {(0, 0), (1, 0)} and not elem.puyo.is_color():
@@ -150,7 +160,6 @@ class PuzzleModule:
                     return False
                 else:
                     puyo = elem.puyo.next_(cond=lambda p: p.is_color())
-
-            grid[elem.pos] = puyo
+                    grid[elem.pos] = puyo
 
         return True

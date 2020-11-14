@@ -7,9 +7,9 @@ Enumerations and Data Models
 .. autoclass:: models.grid_model.AbstractGrid
    :members: new, shape, reset, _tighten, gravitize, is_hidden, adjacent
 
-.. autoclass:: models.grid_model.DrawElemGrid
+.. autoclass:: models.grid_model.MoveGrid
    :show-inheritance:
-   :members: new, cond, reorient, finalize
+   :members: new, reorient, finalize
 
 .. autoclass:: models.grid_model.BoardGrid
    :show-inheritance:

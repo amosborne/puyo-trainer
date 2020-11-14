@@ -39,7 +39,7 @@ class Puzzle:
         pstring = sdivider(slen, "BOARD") + bstring
 
         for idx, move in enumerate(self.moves):
-            # TODO: print moves in a hover grid
+            print(move.grid)
             pass
 
         return pstring

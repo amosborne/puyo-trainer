@@ -2,6 +2,7 @@ import numpy as np
 from collections import namedtuple
 from pandas import DataFrame
 from models.puyo_model import Puyo, Direc
+from copy import deepcopy
 
 
 class AbstractGrid:
@@ -165,8 +166,6 @@ class MoveGrid(AbstractGrid):
             roff, coff = roff, coff - board.shape[0] + 1
         elif direc is Direc.NORTH:
             new_board, roff, coff = AbstractGrid._tighten(board)
-        else:
-            return None
 
         return AbstractGrid(new_board, nhide=0), roff, coff
 
@@ -232,18 +231,26 @@ class HoverGrid(AbstractGrid):
     """
 
     @classmethod
-    def new(cls, shape):
+    def new(cls, board_shape, move_shape):
         """Calls super constructor with zero hidden rows."""
-        assert shape > (2, 1)
+        shape = (2 * max(move_shape) - 1, board_shape[1])
         return super().new(shape, nhide=0)
 
-    def __init__(self, board, drawpile_elem):
-        size = (2 * max(drawpile_elem.board.shape) - 1, board.shape()[1])
-        super().__init__(size, nhide=0)
+    def fit_move(self, move):
+        """Return the same move, but adjusted horizontally as necessary to fit."""
+        grid, coffset = move.grid.finalize(move.direc)
+        lcol = move.col + coffset
+        rcol = move.col + coffset + move.grid.shape[0] - 1
+        new_move = deepcopy(move)
+        if lcol < 0:
+            new_move.col -= lcol
+        elif rcol >= self.shape[0]:
+            new_move.col -= rcol - self.shape[0] + 1
 
-        self.crow = int((size[0] + 1) / 2 - 1)
+        return new_move
 
     def assignMove(self, move=None):
+        """Displays the given move in the hover area."""
         self.reset()
         if move is None:
             return
@@ -323,3 +330,7 @@ class Move:
 
     def __ne__(self, move):
         return not self.__eq__(move)
+
+    @property
+    def shape(self):
+        return self.grid.shape
