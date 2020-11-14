@@ -215,6 +215,35 @@ class TestHoverGrid(unittest.TestCase):
         rfit_move.grid[:] = Puyo.RED
         self.assertEqual(grid.fit_move(rover_move), rfit_move)
 
+    def test_assignmove(self):
+        grid = HoverGrid.new(board_shape=(3, 3), move_shape=(3, 2))
+        grid_result = HoverGrid.new(board_shape=(3, 3), move_shape=(3, 2))
+
+        move = Move(shape=(3, 2), col=1, direc=Direc.NORTH)
+        move.grid[0, 0] = Puyo.RED
+        move.grid[1, 0] = Puyo.BLUE
+        move.grid[2, 1] = Puyo.PURPLE
+
+        grid_result[2, 1] = Puyo.RED
+        grid_result[3, 1] = Puyo.BLUE
+        grid_result[4, 2] = Puyo.PURPLE
+
+        self.assertEqual(grid_result, grid.assign_move(move))
+
+        grid.assign_move()
+        grid_result.assign_move()
+
+        move = Move(shape=(3, 2), col=2, direc=Direc.WEST)
+        move.grid[0, 0] = Puyo.RED
+        move.grid[1, 0] = Puyo.BLUE
+        move.grid[2, 1] = Puyo.PURPLE
+
+        grid_result[2, 2] = Puyo.RED
+        grid_result[2, 1] = Puyo.BLUE
+        grid_result[3, 0] = Puyo.PURPLE
+
+        self.assertEqual(grid_result, grid.assign_move(move))
+
 
 class TestBoardGrid(unittest.TestCase):
     def test_applybigmove(self):

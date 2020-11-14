@@ -17,7 +17,7 @@ Enumerations and Data Models
 
 .. autoclass:: models.grid_model.HoverGrid
    :show-inheritance:
-   :members: new, assignMove
+   :members: new, fit_move, assign_move
              
 .. autoclass:: models.grid_model.Move
 

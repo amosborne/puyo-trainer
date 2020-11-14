@@ -238,7 +238,7 @@ class HoverGrid(AbstractGrid):
 
     def fit_move(self, move):
         """Return the same move, but adjusted horizontally as necessary to fit."""
-        grid, coffset = move.grid.finalize(move.direc)
+        grid, _, coffset = move.grid.reorient(move.direc)
         lcol = move.col + coffset
         rcol = move.col + coffset + move.grid.shape[0] - 1
         new_move = deepcopy(move)
@@ -249,61 +249,20 @@ class HoverGrid(AbstractGrid):
 
         return new_move
 
-    def assignMove(self, move=None):
-        """Displays the given move in the hover area."""
+    def assign_move(self, move=None):
+        """Displays the given move in the hover area. Return **self**."""
         self.reset()
         if move is None:
             return
 
-        # For each orientation, check there isn't an edge collision.
-        # If there is a collision, slide the move horizontally to fit.
-        if move.direc is Direc.NORTH:
-            if move.col + move.puyos.shape()[1] > self.shape()[1]:
-                return self.assignMove(move._replace(col=move.col - 1))
-            elif move.col < 0:
-                return self.assignMove(move._replace(col=move.col + 1))
+        crow = int(self.shape[0] / 2)
 
-        elif move.direc is Direc.SOUTH:
-            if move.col - move.puyos.shape()[1] + 1 < 0:
-                return self.assignMove(move._replace(col=move.col + 1))
-            elif move.col >= self.shape()[1]:
-                return self.assignMove(move._replace(col=move.col - 1))
+        grid, roffset, coffset = move.grid.reorient(move.direc)
+        rslice = slice(crow + roffset, crow + roffset + grid.shape[0])
+        cslice = slice(move.col + coffset, move.col + coffset + grid.shape[1])
+        self[rslice, cslice] = grid._board[:]
 
-        elif move.direc is Direc.EAST:
-            if move.col + move.puyos.shape()[0] > self.shape()[1]:
-                return self.assignMove(move._replace(col=move.col - 1))
-            elif move.col < 0:
-                return self.assignMove(move._replace(col=move.col + 1))
-
-        elif move.direc is Direc.WEST:
-            if move.col - move.puyos.shape()[0] + 1 < 0:
-                return self.assignMove(move._replace(col=move.col + 1))
-            elif move.col > self.shape()[0]:
-                return self.assignMove(move._replace(col=move.col - 1))
-
-        # Apply the move to the hover area grid by slicing.
-        if move.direc is Direc.NORTH:
-            puyos = move.puyos.grid()
-            rslice = slice(self.crow, self.crow + move.puyos.shape()[0])
-            cslice = slice(move.col, move.col + move.puyos.shape()[1])
-
-        elif move.direc is Direc.SOUTH:
-            puyos = np.rot90(move.puyos.grid(), k=2)
-            rslice = slice(self.crow - move.puyos.shape()[0] + 1, self.crow + 1)
-            cslice = slice(move.col - move.puyos.shape()[1] + 1, move.col + 1)
-
-        elif move.direc is Direc.EAST:
-            puyos = np.rot90(move.puyos.grid(), k=1)
-            rslice = slice(self.crow - move.puyos.shape()[1] + 1, self.crow + 1)
-            cslice = slice(move.col, move.col + move.puyos.shape()[0])
-
-        elif move.direc is Direc.WEST:
-            puyos = np.rot90(move.puyos.grid(), k=-1)
-            rslice = slice(self.crow, self.crow + move.puyos.shape()[1])
-            cslice = slice(move.col - move.puyos.shape()[0] + 1, move.col + 1)
-
-        self[rslice, cslice] = puyos
-        return move
+        return self
 
 
 class Move:
