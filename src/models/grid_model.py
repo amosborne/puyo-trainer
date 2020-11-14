@@ -15,7 +15,7 @@ class AbstractGrid:
 
     def __init__(self, board, nhide):
         self._board = board
-        self._nhide = nhide
+        self.nhide = nhide
 
     @classmethod
     def new(cls, shape, nhide):
@@ -75,8 +75,8 @@ class AbstractGrid:
         height, width = board_flipped.shape
 
         col_names = ["c" + str(i + 1) for i in range(width)]
-        row_names1 = ["r" + str(i + 1) for i in reversed(range(height - self._nhide))]
-        row_names2 = ["h" + str(i + 1) for i in reversed(range(self._nhide))]
+        row_names1 = ["r" + str(i + 1) for i in reversed(range(height - self.nhide))]
+        row_names2 = ["h" + str(i + 1) for i in reversed(range(self.nhide))]
 
         dataframe = DataFrame(board_flipped)
         dataframe.columns = col_names
@@ -89,7 +89,7 @@ class AbstractGrid:
         return set([elem for elem in self if elem.puyo is not other[elem.pos]])
 
     def __eq__(self, other):
-        return len(self - other) == 0 and self._nhide == other._nhide
+        return len(self - other) == 0 and self.nhide == other.nhide
 
     def __ne__(self, other):
         return not self == other
@@ -113,46 +113,20 @@ class AbstractGrid:
 
     def is_hidden(self, subscript):
         """Return **True** if the element position is in a hidden row."""
-        return subscript[0] >= self._board.shape[0] - self._nhide
+        return subscript[0] >= self._board.shape[0] - self.nhide
 
     def adjacent(self, subscript):
         """Return the set of adjacent elements to the element position."""
         return set([elem for elem in self if Direc.adj_direc(subscript, elem.pos)])
 
 
-class DrawElemGrid(AbstractGrid):
-    """
-    A grid representing the puyos to be drawn from the drawpile. Setting elements
-    is additionally restricted: the size must be at least (2,1), no puyos may be
-    garbage, and the two bottom-left puyos must be a color. Attempting to set an
-    invalid puyo will do nothing (during initialization a valid puyo is assumed).
-    """
+class MoveGrid(AbstractGrid):
+    """A grid representing the puyos to be drawn from the drawpile."""
 
     @classmethod
     def new(cls, shape):
         """Calls super constructor with zero hidden rows."""
-        assert shape > (2, 1)
         return super().new(shape, nhide=0)
-
-    def __setitem__(self, subscript, value):
-        old_board = self._board.copy()
-        super().__setitem__(subscript, value)
-
-        for elem in self:
-            cond = self.cond(elem.pos)
-            if not cond(elem.puyo):
-                old_elem = old_board[elem.pos]
-                if isinstance(old_elem, Puyo):
-                    self._board[elem.pos] = old_elem
-                else:
-                    self._board[elem.pos] = elem.puyo.next_(cond=cond)
-
-    def cond(self, pos):
-        """For the given position, return the conditional function for a valid puyo."""
-        if pos in {(0, 0), (1, 0)}:
-            return lambda puyo: puyo is not Puyo.NONE and puyo is not Puyo.GARBAGE
-        else:
-            return lambda puyo: puyo is not Puyo.GARBAGE
 
     def finalize(self, direc):
         """
@@ -233,7 +207,7 @@ class BoardGrid(AbstractGrid):
                     else:
                         break
 
-        puyos, _, coff = move.puyos.reorient(move.direc)
+        puyos, _, coff = move.grid.reorient(move.direc)
         applybyColumn(puyos, coff + move.col)
         return self
 
@@ -331,20 +305,20 @@ class Move:
     Supports equality, including rotationally equivalent moves.
     
     Args:
-        puyos (DrawElemGrid): The puyo grid in its north orientation.
+        shape (int, int): The shape of the grid in its north orientation.
         col (int): The column the bottom-left puyo will be dropped
             in to.
         direc (Direc): The orientation of the puyo grid.
     """
 
-    def __init__(self, puyos, col, direc):
-        self.puyos = puyos
+    def __init__(self, shape, col, direc):
+        self.grid = MoveGrid.new(shape)
         self.col = col
         self.direc = direc
 
     def __eq__(self, move):
-        grid1, coff1 = self.puyos.finalize(self.direc)
-        grid2, coff2 = move.puyos.finalize(move.direc)
+        grid1, coff1 = self.grid.finalize(self.direc)
+        grid2, coff2 = move.grid.finalize(move.direc)
         return (grid1 == grid2) and (coff1 + self.col == coff2 + move.col)
 
     def __ne__(self, move):

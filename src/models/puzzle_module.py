@@ -1,3 +1,6 @@
+from models.puyo_model import Puyo
+from models.puzzle_model import Puzzle
+from copy import deepcopy
 import os
 import yaml
 
@@ -19,19 +22,17 @@ class PuzzleModule:
     - The initial board and all moves shall not collectively exceed the
       specified color limit.
     - Each move shall be of the specified shape.
-    - Each move shall have a minimum non-empty shape of (2,1).
+    - Each move shall have a minimum non-empty shape of (2, 1).
     - Each move shall not contain any garbage.
     - Each move shall fit the board horizontally.
     """
-
-    rules = []
 
     @staticmethod
     def new(
         modulename,
         board_shape,
         board_nhide,
-        drawelem_shape,
+        move_shape,
         color_limit,
         pop_limit,
         modulereadme,
@@ -39,34 +40,33 @@ class PuzzleModule:
         """
         Args:
             modulename (str): Must be unique.
-            board_shape (int, int): Within (12,6) and (26,16).
+            board_shape (int, int): Within (12, 6) and (26, 16).
             board_nhide (int): Within 1 and 2.
-            drawelem_shape (int, int): Within (2,1) and (2,2).
+            move_shape (int, int): Within (2, 1) and (2, 2).
             color_limit (int): Within 3 and 5.
             pop_limit (int): Within 2 and 6.
             modulereadme (str): Documentation.
         """
 
-        # Validate function arguments.
-        assert (12 <= board_shape[0] <= 26) and (6 <= board_shape[1] <= 16)
-        assert 1 <= board_nhide <= 2
-        assert (2 == drawelem_shape[0]) and (1 <= drawelem_shape[1] <= 2)
-        assert 3 <= color_limit <= 5
-        assert 2 <= pop_limit <= 6
-        assert not os.path.isdir(MODULE_ROOT + modulename)
-
-        # Assign attributes and return.
+        # Assign metadata attributes.
         module = PuzzleModule()
         module.board_shape = board_shape
         module.board_nhide = board_nhide
-        module.drawelem_shape = drawelem_shape
+        module.move_shape = move_shape
         module.color_limit = color_limit
         module.pop_limit = pop_limit
+        module.modulereadme = modulereadme
+
+        module._validate_metadata()
 
         # Write the metadata file.
+        assert not os.path.isdir(MODULE_ROOT + modulename)
         os.mkdir(MODULE_ROOT + modulename)
         with open(MODULE_ROOT + modulename + METADATA_FILE, "w") as outfile:
             yaml.dump(module, outfile)
+
+        module._specify_rules()
+        module.puzzles = []
 
         return module
 
@@ -77,7 +77,80 @@ class PuzzleModule:
             modulename (str): Must be on file (with metadata).
         """
 
+        # Load metadata attributes.
         with open(MODULE_ROOT + modulename + METADATA_FILE, "r") as infile:
             module = yaml.load(infile, Loader=yaml.Loader)
+            module._validate_metadata()
+            module._specify_rules()
+
+        # TODO: load all puzzles in module, check all rules and compatability
 
         return module
+
+    def new_puzzle(self, puzzle_copy=None):
+        if puzzle_copy is not None:
+            return deepcopy(puzzle_copy)
+        else:
+            return Puzzle.new(self)
+
+    def save_puzzle(self, puzzle):
+        # TODO: check compatability
+        self.puzzles.append(puzzle)
+
+    def _validate_metadata(self):
+        def between(x, xmin, xmax):
+            return xmin <= x <= xmax
+
+        assert between(self.board_shape[0], 12, 26)  # board height
+        assert between(self.board_shape[1], 6, 16)  # board width
+        assert between(self.board_nhide, 1, 2)  # hidden rows
+        assert between(self.move_shape[0], 2, 2)  # move height
+        assert between(self.move_shape[1], 1, 2)  # move width
+        assert between(self.color_limit, 3, 5)  # colors
+        assert between(self.pop_limit, 2, 6)  # pops
+
+    def _specify_rules(self):
+        """
+        Rules are a list of functions with the signature rule(puzzle, force).
+        If force is True, then the rule will take corrective action, if possible.
+        The return value is whether the puzzle is compliant upon function return.
+        """
+        rules = []
+        rules.append(self._rule_board_shape)
+        rules.append(self._rule_move_shape)
+        rules.append(self._rule_move_minsize_nogarbage)
+        # TODO: add rule for minimum two moves (with correction)
+        # TODO: add rule no floating puyos or pop groups (no correction)
+        self.rules = rules
+
+    def _rule_board_shape(self, puzzle, force):  # no force action
+        shape = self.board_shape == puzzle.board.shape
+        nhide = self.board_nhide == puzzle.board.nhide
+        return shape and nhide
+
+    def _rule_move_shape(self, puzzle, force):  # no force action
+        return all([self.move_shape == move.shape for move in puzzle.moves])
+
+    @staticmethod
+    def _rule_move_minsize_nogarbage(puzzle, force):
+        mv_elems = [[(mv.grid, elem) for elem in mv.grid] for mv in puzzle.moves]
+
+        for grid, elem in mv_elems:
+
+            # no garbage rule
+            if elem.puyo is Puyo.GARBAGE:
+                if not force:
+                    return False
+                else:
+                    puyo = elem.puyo.next_(cond=lambda p: p is not Puyo.GARBAGE)
+
+            # minimum size rule
+            if elem.pos in {(0, 0), (1, 0)} and not elem.puyo.is_color():
+                if not force:
+                    return False
+                else:
+                    puyo = elem.puyo.next_(cond=lambda p: p.is_color())
+
+            grid[elem.pos] = puyo
+
+        return True
