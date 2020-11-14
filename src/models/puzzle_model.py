@@ -1,4 +1,4 @@
-from models.grid_model import BoardGrid, Move
+from models.grid_model import BoardGrid, HoverGrid, Move
 from models.puyo_model import Direc
 
 
@@ -8,6 +8,7 @@ class Puzzle:
         puzzle = Puzzle()
         puzzle.board = BoardGrid.new(shape=module.board_shape, nhide=module.board_nhide)
         puzzle.moves = []
+        puzzle.hover = HoverGrid.new(module.board_shape, module.move_shape)
         puzzle.module = module
 
         puzzle.apply_rules(force=True)
@@ -39,7 +40,7 @@ class Puzzle:
         pstring = sdivider(slen, "BOARD") + bstring
 
         for idx, move in enumerate(self.moves):
-            print(move.grid)
-            pass
+            pstring += sdivider(slen, "MOVE " + str(idx))
+            pstring += self.hover.assign_move(move).__str__()
 
         return pstring
