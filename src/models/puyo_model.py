@@ -51,10 +51,12 @@ class Puyo(EnumCycle):
 
     @staticmethod
     def is_color(puyo):
+        """Return **True** if the given **Puyo** is colored."""
         return puyo is not Puyo.NONE and puyo is not Puyo.GARBAGE
 
     @staticmethod
     def isnot_garbage(puyo):
+        """Return **True** if the given **Puyo** is not garbage."""
         return puyo is not Puyo.GARBAGE
 
     def __str__(self):
@@ -71,17 +73,19 @@ class Direc(EnumCycle):
     SOUTH = auto()
     WEST = auto()
 
-    def rotate_cw(self):
-        """Rotate clockwise (once)."""
-        return self.next_()
+    @staticmethod
+    def rotate_cw(direc):
+        """Return the **Direc** that is 90 degrees clockwise."""
+        return direc.next_()
 
-    def rotate_ccw(self):
-        """Rotate counter-clockwise (once)."""
-        return self.next_(k=-1)
+    @staticmethod
+    def rotate_ccw(direc):
+        """Return the **Direc** that is 90 degrees counter-clockwise."""
+        return direc.next_(k=-1)
 
-    @classmethod
-    def adj_direc(cls, pos1, pos2):
-        """Return the enum which points from **pos1** to **pos2** (or none)."""
+    @staticmethod
+    def adj_direc(pos1, pos2):
+        """Return the **Direc** which points from **pos1** to **pos2** (if adjacent)."""
         if pos1[1] == pos2[1] and pos1[0] + 1 == pos2[0]:
             return Direc.NORTH
         elif pos1[1] == pos2[1] and pos1[0] - 1 == pos2[0]:

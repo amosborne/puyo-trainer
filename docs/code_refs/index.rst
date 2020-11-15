@@ -3,4 +3,6 @@ Code Reference
 
 .. toctree::
 
-   models/index
+   models/enumerations
+   models/gridmodels
+   models/puzzlemodels

@@ -259,7 +259,7 @@ class TestBoardGrid(unittest.TestCase):
         result[0:2, 0] = Puyo.RED
         result[0, 1] = Puyo.GREEN
         result[1, 1] = Puyo.BLUE
-        self.assertEqual(board.applyMove(move), result)
+        self.assertEqual(board.apply_move(move), result)
 
         # top row cutoff
         move.col = 2
@@ -267,4 +267,4 @@ class TestBoardGrid(unittest.TestCase):
 
         result[2, 1] = Puyo.BLUE
         result[0:2, 2] = Puyo.RED
-        self.assertEqual(board.applyMove(move), result)
+        self.assertEqual(board.apply_move(move), result)

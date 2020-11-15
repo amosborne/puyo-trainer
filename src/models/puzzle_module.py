@@ -107,8 +107,8 @@ class PuzzleModule:
         assert between(self.board_nhide, 1, 2)  # hidden rows
         assert between(self.move_shape[0], 2, 2)  # move height
         assert between(self.move_shape[1], 1, 2)  # move width
-        assert between(self.color_limit, 3, 5)  # colors
-        assert between(self.pop_limit, 2, 6)  # pops
+        assert between(self.color_limit, 3, 5)  # color limit
+        assert between(self.pop_limit, 2, 6)  # pop limit
 
     def _specify_rules(self):
         """
@@ -119,11 +119,11 @@ class PuzzleModule:
         rules = []
         rules.append(self._rule_metadata_matches_board_shape)
         rules.append(self._rule_metadata_matches_move_shape)
-        rules.append(self._rule_atleast_one_move)
-        rules.append(self._rule_move_lacks_garbage)
-        rules.append(self._rule_minimum_move_size)
+        rules.append(self._rule_atleast_one_move)  # has force
+        rules.append(self._rule_move_lacks_garbage)  # has force
+        rules.append(self._rule_minimum_move_size)  # has force
         rules.append(self._rule_color_limit)
-        rules.append(self._rule_move_fits_horizontally)
+        rules.append(self._rule_move_fits_horizontally)  # has force
         # TODO: Add rule -- no floating puyos (no corrective action)
         # TODO: Add rule -- no pop groups (no corrective action)
         self.rules = rules

@@ -21,11 +21,11 @@ class TestEnums(unittest.TestCase):
 
     def test_direc_enum(self):
         # enum ordering and wrap-around
-        self.assertEqual(Direc.NORTH.rotate_cw(), Direc.EAST)
-        self.assertEqual(Direc.EAST.rotate_cw(), Direc.SOUTH)
-        self.assertEqual(Direc.SOUTH.rotate_cw(), Direc.WEST)
-        self.assertEqual(Direc.WEST.rotate_cw(), Direc.NORTH)
-        self.assertEqual(Direc.NORTH.rotate_ccw(), Direc.WEST)
+        self.assertEqual(Direc.rotate_cw(Direc.NORTH), Direc.EAST)
+        self.assertEqual(Direc.rotate_cw(Direc.EAST), Direc.SOUTH)
+        self.assertEqual(Direc.rotate_cw(Direc.SOUTH), Direc.WEST)
+        self.assertEqual(Direc.rotate_cw(Direc.WEST), Direc.NORTH)
+        self.assertEqual(Direc.rotate_ccw(Direc.NORTH), Direc.WEST)
 
         # adjacent direction
         self.assertEqual(Direc.NORTH, Direc.adj_direc((1, 1), (2, 1)))
