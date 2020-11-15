@@ -42,13 +42,13 @@ class GameView(QWidget):
         layout = QVBoxLayout()
         for idx in range(2):  # hardcoded two previews
             try:
-                elem = PuyoGridView(self.drawpile[draw_index + idx], isframed=False)
+                elem = PuyoGridView(self.drawpile[draw_index + idx + 1], isframed=False)
                 layout.addWidget(elem)
             except IndexError:
                 pass
 
         layout.addStretch()
-        label = QLabel(str(len(self.drawpile) - draw_index + 1) + " remaining.")
+        label = QLabel(str(len(self.drawpile) - draw_index) + " remaining.")
         layout.addWidget(label)
 
         deleteItemOfLayout(self.layout, 1)

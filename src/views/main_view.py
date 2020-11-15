@@ -10,8 +10,6 @@ def run_app():
     app = QApplication([])
 
     skin = "./ppvs2_skins/gummy.png"
-    print(os.path.isfile(skin))
-    print(os.getcwd())
 
     name = "dryrun"
     module = PuzzleModule.new(

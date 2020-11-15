@@ -160,10 +160,10 @@ class PuzzleSolveView(QWidget):
     def __init__(self, board, drawpile, hoverarea, parent=None):
         super().__init__(parent)
 
-        self.gameplayview = GameView(board, drawpile, hoverarea, draw_index=0)
+        self.gameview = GameView(board, drawpile, hoverarea, draw_index=0)
 
         layout = QVBoxLayout(self)
-        layout.addWidget(self.gameplayview)
+        layout.addWidget(self.gameview)
 
         back_button = QPushButton("Go Back")
         back_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)

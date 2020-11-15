@@ -223,6 +223,7 @@ class BoardGrid(AbstractGrid):
     def revert(self):
         """Revert the board to its initial state and return **self**."""
         self._board = self._boardlist[0] if self._boardlist else self._board
+        self._boardlist = []
         return self
 
 
@@ -247,7 +248,7 @@ class HoverGrid(AbstractGrid):
         if lcol < 0:
             new_move.col -= lcol
             return new_move
-        elif rcol >= self.shape[0]:
+        elif rcol >= self.shape[1]:
             new_move.col -= rcol - self.shape[1] + 1
             return new_move
 

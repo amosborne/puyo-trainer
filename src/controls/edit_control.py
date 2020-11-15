@@ -13,12 +13,12 @@ class EditorVC:
 
         self.view = EditorView(board_graphic, move_graphics, hover_graphics)
 
-        # self.game_controller = GameVC(puzzle, self.view.solverview.gameview)
+        self.game_controller = GameVC(puzzle, self.view.solverview.gameview)
 
         self.skin = skin
         self.puzzle = puzzle
         self.bindDefineView()
-        # self.bindSolverView()
+        self.bindSolverView()
 
     def bindDefineView(self):
         model = self.puzzle
@@ -33,7 +33,6 @@ class EditorVC:
                     [PuyoGraphicModel(self.skin, move.grid) for move in model.moves]
                 )
                 view.updateView()
-                print(model)
 
             return decorated
 
@@ -63,8 +62,9 @@ class EditorVC:
             del model.moves[:]
 
         def startSolution():
-            self.view.centralWidget().setCurrentWidget(self.view.solverview)
-            self.game_controller.reset()
+            if model.apply_rules():
+                self.view.centralWidget().setCurrentWidget(self.view.solverview)
+                self.game_controller.reset()
 
         view.click_board_puyos.connect(changeBoardElem)
         view.click_drawpile_puyos.connect(changeDrawpileElem)
@@ -75,7 +75,7 @@ class EditorVC:
         view.click_start.connect(startSolution)
 
     def bindSolverView(self):
-        model = self.model
+        model = self.puzzle
         view = self.view.solverview
 
         def exitSolver():

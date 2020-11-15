@@ -3,10 +3,21 @@ from models.grid_model import Move
 from copy import deepcopy
 
 
+def try_and_update(func):
+    def wrapper(self):
+        try:
+            func(self)
+            self.model.apply_rules(force=True)
+            self._updateView()
+        except IndexError:
+            pass
+
+    return wrapper
+
+
 class GameVC:
-    def __init__(self, puzzlemodel, hoverarea, view):
-        self.model = puzzlemodel
-        self.hoverarea = hoverarea
+    def __init__(self, puzzle, view):
+        self.model = puzzle
         self.view = view
 
         view.pressX.connect(self.rotateRight)
@@ -16,59 +27,52 @@ class GameVC:
         view.pressUp.connect(self.revertMove)
         view.pressDown.connect(self.makeMove)
 
+    @try_and_update
     def rotateRight(self):
-        if self.move:
-            self.move = self.move._replace(direc=self.move.direc.rotateR())
-            self._updateView()
+        move = self.model.moves[self.draw_index]
+        move.direc = Direc.rotate_cw(move.direc)
 
+    @try_and_update
     def rotateLeft(self):
-        if self.move:
-            self.move = self.move._replace(direc=self.move.direc.rotateL())
-            self._updateView()
+        move = self.model.moves[self.draw_index]
+        move.direc = Direc.rotate_ccw(move.direc)
 
+    @try_and_update
     def shiftRight(self):
-        if self.move:
-            self.move = self.move._replace(col=self.move.col + 1)
-            self._updateView()
+        self.model.moves[self.draw_index].col += 1
 
+    @try_and_update
     def shiftLeft(self):
-        if self.move:
-            self.move = self.move._replace(col=self.move.col - 1)
-            self._updateView()
+        self.model.moves[self.draw_index].col -= 1
 
+    @try_and_update
     def makeMove(self):
-        if self.move:
-            self.model.board.applyMove(self.move)
-            self.draw_index += 1
-            if self.draw_index > len(self.model.drawpile):
-                self.move = None
-            else:
-                self.move = self._defaultMove()
-            self._updateView()
+        self.model.board.apply_move(self.model.moves[self.draw_index])
+        self.draw_index += 1
 
+    @try_and_update
     def revertMove(self):
-        if self.draw_index > 1:
+        if self.draw_index > 0:
             self.draw_index -= 1
-            self.move = self.model.board.revertMove()
-            self._updateView()
+            self.model.board.revert_move()
 
     def reset(self):
-        self.draw_index = 1
-        self.move = self._defaultMove()
+        self.draw_index = 0
         self._updateView()
 
-    def _defaultMove(self):
-        puyos = self.model.drawpile[self.draw_index - 1]
-        return Move(puyos, col=2, direc=Direc.NORTH)
-
     def _updateView(self):
-        self.move = self.hoverarea.assignMove(self.move)
+        try:
+            move = self.model.moves[self.draw_index]
+        except IndexError:
+            move = None
 
-        if self.move:
-            future_board = deepcopy(self.model.board)
-            future_board.applyMove(self.move)
-            self.view.board.ghosts = future_board - self.model.board
-        else:
-            self.view.board.ghosts = set()
+        self.model.hover.assign_move(move)
+
+        # if self.move:
+        #     future_board = deepcopy(self.model.board)
+        #     future_board.applyMove(self.move)
+        #     self.view.board.ghosts = future_board - self.model.board
+        # else:
+        #     self.view.board.ghosts = set()
 
         self.view.updateView(self.draw_index)
