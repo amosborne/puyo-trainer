@@ -68,11 +68,11 @@ class GameVC:
 
         self.model.hover.assign_move(move)
 
-        # if self.move:
-        #     future_board = deepcopy(self.model.board)
-        #     future_board.applyMove(self.move)
-        #     self.view.board.ghosts = future_board - self.model.board
-        # else:
-        #     self.view.board.ghosts = set()
+        if move is not None:
+            future_board = deepcopy(self.model.board)
+            future_board.apply_move(move)
+            self.view.board.ghosts = future_board - self.model.board
+        else:
+            self.view.board.ghosts = set()
 
         self.view.updateView(self.draw_index)

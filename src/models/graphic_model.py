@@ -44,6 +44,14 @@ class PuyoGraphicModel:
 
             yield Graphic(elem.pos, rect, opacity)
 
+        for elem in self.ghosts:
+            px_row = GHOST_ROW
+            px_col = SKIN_GHOST_MAP[elem.puyo]
+            rect = [px * SKIN_SIZE for px in (px_col, px_row, 1, 1)]
+            rect[0] = rect[0] - int(SKIN_SIZE / 4) + 2
+            rect[1] = rect[1] - 8
+            yield Graphic(elem.pos, tuple(rect), 1)
+
 
 Graphic = namedtuple("Graphic", "pos, rect, opacity")
 
@@ -80,4 +88,10 @@ SKIN_COL_MAP[AdjMatch(north=False, south=True, east=True, west=True)] = 13
 SKIN_COL_MAP[AdjMatch(north=True, south=False, east=True, west=True)] = 14
 SKIN_COL_MAP[AdjMatch(north=True, south=True, east=True, west=True)] = 15
 
+GHOST_ROW = 11
 SKIN_GHOST_MAP = defaultdict(int)
+SKIN_GHOST_MAP[Puyo.RED] = 5
+SKIN_GHOST_MAP[Puyo.GREEN] = 6
+SKIN_GHOST_MAP[Puyo.BLUE] = 7
+SKIN_GHOST_MAP[Puyo.YELLOW] = 8
+SKIN_GHOST_MAP[Puyo.PURPLE] = 9

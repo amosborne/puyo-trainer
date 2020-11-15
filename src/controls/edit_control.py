@@ -81,6 +81,7 @@ class EditorVC:
         def exitSolver():
             self.view.centralWidget().setCurrentWidget(self.view.defineview)
             model.board.revert()
+            view.gameview.board.ghosts = set()
 
         view.click_back.connect(exitSolver)
         view.click_save.connect(lambda: print("save and exit!"))
