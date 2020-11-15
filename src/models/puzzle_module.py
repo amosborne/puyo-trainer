@@ -57,6 +57,7 @@ class PuzzleModule:
         module.color_limit = color_limit
         module.pop_limit = pop_limit
         module.modulereadme = modulereadme
+        module.puzzles = []
 
         module._validate_metadata()
 
@@ -67,7 +68,6 @@ class PuzzleModule:
             yaml.dump(module, outfile)
 
         module._specify_rules()
-        module.puzzles = []
 
         return module
 
@@ -112,29 +112,32 @@ class PuzzleModule:
 
     def _specify_rules(self):
         """
-        Rules are a list of functions with the signature rule(puzzle, force).
-        If force is True, then the rule will may take corrective action.
-        The return value is whether the puzzle is compliant upon function return.
+        Each rule has the signature rule(puzzle, force). If force is True,
+        then the rule may take corrective action. Each rule returns whether
+        the puzzle is compliant to the rule.
         """
         rules = []
-        rules.append(self._rule_board_shape)
-        rules.append(self._rule_move_shape)
-        rules.append(self._rule_move_quantity)  # has force
-        rules.append(self._rule_move_minsize_nogarbage)  # has force
-        rules.append(self._rule_color_count)
-        # TODO: add rule no floating puyos or pop groups (no correction)
+        rules.append(self._rule_metadata_matches_board_shape)
+        rules.append(self._rule_metadata_matches_move_shape)
+        rules.append(self._rule_atleast_one_move)
+        rules.append(self._rule_move_lacks_garbage)
+        rules.append(self._rule_minimum_move_size)
+        rules.append(self._rule_color_limit)
+        rules.append(self._rule_move_fits_horizontally)
+        # TODO: Add rule -- no floating puyos (no corrective action)
+        # TODO: Add rule -- no pop groups (no corrective action)
         self.rules = rules
 
-    def _rule_board_shape(self, puzzle, force):  # no force action
+    def _rule_metadata_matches_board_shape(self, puzzle, force):
         visr, visc = self.board_shape
         shape = (visr + puzzle.board.nhide, visc) == puzzle.board.shape
         nhide = self.board_nhide == puzzle.board.nhide
         return shape and nhide
 
-    def _rule_move_shape(self, puzzle, force):  # no force action
+    def _rule_metadata_matches_move_shape(self, puzzle, force):
         return all([self.move_shape == move.shape for move in puzzle.moves])
 
-    def _rule_move_quantity(self, puzzle, force):
+    def _rule_atleast_one_move(self, puzzle, force):
         if not puzzle.moves and not force:
             return False
         elif not puzzle.moves:
@@ -143,39 +146,42 @@ class PuzzleModule:
 
         return True
 
-    def _rule_floaters_or_poppers(self, puzzle, force):  # no force action
-        pass
-
-    def _rule_color_count(self, puzzle, force):  # no force action
-        colors = puzzle.board.colors
+    def _rule_move_lacks_garbage(self, puzzle, force):
         for move in puzzle.moves:
-            colors |= move.grid.colors
+            for elem in move.grid:
+                if elem.puyo is Puyo.GARBAGE and not force:
+                    return False
+                elif elem.puyo is Puyo.GARBAGE:
+                    puyo = elem.puyo.next_(cond=Puyo.isnot_garbage)
+                    move.grid[elem.pos] = puyo
+
+        return True
+
+    def _rule_minimum_move_size(self, puzzle, force):
+        required = {(0, 0), (1, 0)}
+        for move in puzzle.moves:
+            for elem in move.grid:
+                violates = elem.pos in required and not Puyo.is_color(elem.puyo)
+                if violates and not force:
+                    return False
+                elif violates:
+                    puyo = elem.puyo.next_(cond=Puyo.is_color)
+                    move.grid[elem.pos] = puyo
+
+        return True
+
+    def _rule_color_limit(self, puzzle, force):
+        colors = set.union(*tuple([move.grid.colors for move in puzzle.moves]))
+        colors |= puzzle.board.colors
         colors -= {Puyo.NONE, Puyo.GARBAGE}
         return len(colors) <= self.color_limit
 
-    def _rule_move_fit(self, puzzle, force):
-        pass
-
-    @staticmethod
-    def _rule_move_minsize_nogarbage(puzzle, force):
-        mv_elems = [(mv.grid, elem) for mv in puzzle.moves for elem in mv.grid]
-
-        for grid, elem in mv_elems:
-
-            # no garbage rule
-            if elem.puyo is Puyo.GARBAGE:
-                if not force:
-                    return False
-                else:
-                    puyo = elem.puyo.next_(cond=lambda p: p is not Puyo.GARBAGE)
-                    grid[elem.pos] = puyo
-
-            # minimum size rule
-            if elem.pos in {(0, 0), (1, 0)} and not elem.puyo.is_color():
-                if not force:
-                    return False
-                else:
-                    puyo = elem.puyo.next_(cond=lambda p: p.is_color())
-                    grid[elem.pos] = puyo
+    def _rule_move_fits_horizontally(self, puzzle, force):
+        for idx, move in enumerate(puzzle.moves):
+            new_move = puzzle.hover.fit_move(move)
+            if not new_move == move and not force:
+                return False
+            elif not new_move == move:
+                puzzle.moves[idx] = new_move
 
         return True

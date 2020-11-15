@@ -15,12 +15,9 @@ class TestEnums(unittest.TestCase):
         self.assertEqual(Puyo.RED, Puyo.GARBAGE.next_(k=2))
 
         # conditional functions
-        def iscolor(puyo):
-            return puyo is not Puyo.NONE and puyo is not Puyo.GARBAGE
-
-        self.assertEqual(Puyo.RED, Puyo.PURPLE.next_(cond=iscolor))
-        self.assertEqual(Puyo.GREEN, Puyo.PURPLE.next_(cond=iscolor, k=2))
-        self.assertEqual(Puyo.BLUE, Puyo.PURPLE.next_(cond=iscolor, k=-2))
+        self.assertEqual(Puyo.RED, Puyo.PURPLE.next_(cond=Puyo.is_color))
+        self.assertEqual(Puyo.GREEN, Puyo.PURPLE.next_(cond=Puyo.is_color, k=2))
+        self.assertEqual(Puyo.BLUE, Puyo.PURPLE.next_(cond=Puyo.is_color, k=-2))
 
     def test_direc_enum(self):
         # enum ordering and wrap-around

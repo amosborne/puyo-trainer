@@ -245,14 +245,16 @@ class HoverGrid(AbstractGrid):
         """Return the same move, but adjusted horizontally as necessary to fit."""
         grid, _, coffset = move.grid.reorient(move.direc)
         lcol = move.col + coffset
-        rcol = move.col + coffset + move.grid.shape[0] - 1
+        rcol = move.col + coffset + grid.shape[1] - 1
         new_move = deepcopy(move)
         if lcol < 0:
             new_move.col -= lcol
+            return new_move
         elif rcol >= self.shape[0]:
-            new_move.col -= rcol - self.shape[0] + 1
+            new_move.col -= rcol - self.shape[1] + 1
+            return new_move
 
-        return new_move
+        return move
 
     def assign_move(self, move=None):
         """Displays the given move in the hover area. Return **self**."""

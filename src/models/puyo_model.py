@@ -49,8 +49,13 @@ class Puyo(EnumCycle):
     PURPLE = auto()
     GARBAGE = auto()
 
-    def is_color(self):
-        return self is not Puyo.NONE and self is not Puyo.GARBAGE
+    @staticmethod
+    def is_color(puyo):
+        return puyo is not Puyo.NONE and puyo is not Puyo.GARBAGE
+
+    @staticmethod
+    def isnot_garbage(puyo):
+        return puyo is not Puyo.GARBAGE
 
     def __str__(self):
         if self is Puyo.NONE:
