@@ -1,10 +1,10 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel
 from PyQt5.QtCore import pyqtSignal, Qt
-from puyoui.puyoview import PuyoGridView
-from puyoui.qtutils import deleteItemOfLayout
+from views.puyo_view import PuyoGridView
+from views.qtutils import deleteItemOfLayout
 
 
-class GameplayView(QWidget):
+class GameView(QWidget):
     pressX = pyqtSignal()
     pressZ = pyqtSignal()
     pressUp = pyqtSignal()

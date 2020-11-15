@@ -10,8 +10,8 @@ from PyQt5.QtWidgets import (
     QStackedWidget,
 )
 from PyQt5.QtCore import Qt, pyqtSignal
-from puyoui.puyoview import PuyoGridView
-from puyoui.gameview import GameplayView
+from views.puyo_view import PuyoGridView
+from views.game_view import GameView
 
 
 """
@@ -160,7 +160,7 @@ class PuzzleSolveView(QWidget):
     def __init__(self, board, drawpile, hoverarea, parent=None):
         super().__init__(parent)
 
-        self.gameplayview = GameplayView(board, drawpile, hoverarea, draw_index=0)
+        self.gameplayview = GameView(board, drawpile, hoverarea, draw_index=0)
 
         layout = QVBoxLayout(self)
         layout.addWidget(self.gameplayview)

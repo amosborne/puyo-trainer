@@ -1,19 +1,17 @@
 from collections import namedtuple, defaultdict
-from puyolib.puyomodel import Puyo, Direc
-from puyolib.puyogridmodel import adjacency_direction
-
+from models.puyo_model import Puyo, Direc
 
 # An abstraction layer between a grid of puyos and their graphical presentation.
 # This module is designed to work with 512x512px skin files from PPVS2.
 class PuyoGraphicModel:
-    def __init__(self, skin, gridmodel, ghosts=set()):
+    def __init__(self, skin, grid, ghosts=set()):
         self.skin = skin
-        self.gridmodel = gridmodel
+        self.grid = grid
         self.ghosts = ghosts
 
     # Iteration through ghosts not yet implemented.
     def __iter__(self):
-        for elem in self.gridmodel:
+        for elem in self.grid:
             px_row = SKIN_ROW_MAP[elem.puyo]
 
             if elem.puyo is Puyo.NONE:
@@ -21,15 +19,15 @@ class PuyoGraphicModel:
             elif elem.puyo is Puyo.GARBAGE:
                 px_col = GARBAGE_COL
             else:
-                adj_set = self.gridmodel.getAdjacent(elem.pos)
+                adj_set = self.grid.adjacent(elem.pos)
                 adj_set = {adj for adj in adj_set if adj.puyo is elem.puyo}
 
                 north, south, east, west = (False, False, False, False)
-                if not self.gridmodel.isHidden(elem.pos):
+                if not self.grid.is_hidden(elem.pos):
                     for adj in adj_set:
-                        if self.gridmodel.isHidden(adj.pos):
+                        if self.grid.is_hidden(adj.pos):
                             continue
-                        direc = adjacency_direction(elem.pos, adj.pos)
+                        direc = Direc.adj_direc(elem.pos, adj.pos)
                         north = True if direc is Direc.NORTH else north
                         south = True if direc is Direc.SOUTH else south
                         east = True if direc is Direc.EAST else east
@@ -39,7 +37,7 @@ class PuyoGraphicModel:
                 px_col = SKIN_COL_MAP[adj_match]
 
             rect = tuple(px * SKIN_SIZE for px in (px_col, px_row, 1, 1))
-            if self.gridmodel.isHidden(elem.pos) and elem.puyo is not Puyo.NONE:
+            if self.grid.is_hidden(elem.pos) and elem.puyo is not Puyo.NONE:
                 opacity = 0.5
             else:
                 opacity = 1
@@ -83,4 +81,3 @@ SKIN_COL_MAP[AdjMatch(north=True, south=False, east=True, west=True)] = 14
 SKIN_COL_MAP[AdjMatch(north=True, south=True, east=True, west=True)] = 15
 
 SKIN_GHOST_MAP = defaultdict(int)
-SKIN_GHOST_MAP[Puyo.RED]

@@ -1,8 +1,9 @@
-from puyolib.puyomodel import Move, Direc
+from models.puyo_model import Direc
+from models.grid_model import Move
 from copy import deepcopy
 
 
-class GameplayVC:
+class GameVC:
     def __init__(self, puzzlemodel, hoverarea, view):
         self.model = puzzlemodel
         self.hoverarea = hoverarea
