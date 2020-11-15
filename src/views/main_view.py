@@ -18,15 +18,21 @@ import os
 
 class MainControl:
     def __init__(self, view):
+        self.view = view
+
         view.skin_select.connect(lambda x: print(x))
-        view.module_select.connect(lambda x: print(x))
+        view.module_select.connect(self._load_module)
         view.new_module_click.connect(self._define_new_module)
         view.test_module_click.connect(lambda: print("testing module"))
 
         view.emitInitialState()
         view.show()
 
-        self.view = view
+    def _load_module(self, module):
+        if module is not None:
+            self.module = PuzzleModule.load(module, self.view.moduleparams)
+        else:
+            self.module = None
 
     def _define_new_module(self):
         dialog = NewModuleDialog(

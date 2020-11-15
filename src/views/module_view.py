@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QLineEdit,
     QPlainTextEdit,
+    QMessageBox,
 )
 from PyQt5.QtCore import Qt
 import os
@@ -20,7 +21,7 @@ class NewModuleDialog(QDialog):
         self.modulepath = modulepath
 
         layout = QVBoxLayout(self)
-        form = CreateModuleFormLayout(moduleparams)
+        form = CreateModuleFormLayout(modulepath, moduleparams)
         quit_button = QPushButton("Cancel")
         ok_button = QPushButton("Apply")
 
@@ -38,14 +39,20 @@ class NewModuleDialog(QDialog):
 
     def _validateModule(self):
         name = self.form.new_module_kwargs["modulename"]
-        if os.path.isdir(self.modulepath + name):
-            pass  # TODO: catch duplicate names
+        if os.path.isdir(name):
+            error_dialog = QMessageBox()
+            error_dialog.setText("Module name already exists.")
+            error_dialog.exec_()
         else:
             self.accept()
 
 
+class ModuleDisplayFormLayout(QHBoxLayout):
+    pass
+
+
 class CreateModuleFormLayout(QFormLayout):
-    def __init__(self, moduleparams, parent=None):
+    def __init__(self, modulepath, moduleparams, parent=None):
         super().__init__(parent)
 
         self.moduleparams = moduleparams
@@ -53,7 +60,7 @@ class CreateModuleFormLayout(QFormLayout):
 
         line_edit = QLineEdit()
         self.addRow("Module Name:", line_edit)
-        self.callbacks.append(lambda: ("modulename", line_edit.text()))
+        self.callbacks.append(lambda: ("modulename", modulepath + line_edit.text()))
 
         self._addComboRow(
             key="board_shape",

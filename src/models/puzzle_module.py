@@ -4,7 +4,6 @@ from copy import deepcopy
 import os
 import yaml
 
-MODULE_ROOT = "./modules/"
 METADATA_FILE = "/metadata.yml"
 
 
@@ -58,12 +57,9 @@ class PuzzleModule:
         module.pop_limit = pop_limit
         module.modulereadme = modulereadme
 
-        module._validate_metadata()
-
         # Write the metadata file.
-        assert not os.path.isdir(MODULE_ROOT + modulename)
-        os.mkdir(MODULE_ROOT + modulename)
-        with open(MODULE_ROOT + modulename + METADATA_FILE, "w") as outfile:
+        os.mkdir(modulename)
+        with open(modulename + METADATA_FILE, "w") as outfile:
             yaml.dump(module, outfile)
 
         module._specify_rules()
@@ -72,16 +68,17 @@ class PuzzleModule:
         return module
 
     @staticmethod
-    def load(modulename):
+    def load(modulename, moduleparams):
         """
         Args:
             modulename (str): Must be on file (with metadata).
+            moduleparams (dict): Dictionary of min/max for each numeric parameter.
         """
 
         # Load metadata attributes.
-        with open(MODULE_ROOT + modulename + METADATA_FILE, "r") as infile:
+        with open(modulename + METADATA_FILE, "r") as infile:
             module = yaml.load(infile, Loader=yaml.Loader)
-            module._validate_metadata()
+            module._validate_metadata(moduleparams)
             module._specify_rules()
 
         # TODO: load all puzzles in module, check all rules and compatability
@@ -98,17 +95,14 @@ class PuzzleModule:
         # TODO: check compatability
         self.puzzles.append(puzzle)
 
-    def _validate_metadata(self):
-        def between(x, xmin, xmax):
-            return xmin <= x <= xmax
-
-        assert between(self.board_shape[0], 12, 26)  # board height
-        assert between(self.board_shape[1], 6, 16)  # board width
-        assert between(self.board_nhide, 1, 2)  # hidden rows
-        assert between(self.move_shape[0], 2, 2)  # move height
-        assert between(self.move_shape[1], 1, 2)  # move width
-        assert between(self.color_limit, 3, 5)  # color limit
-        assert between(self.pop_limit, 2, 6)  # pop limit
+    def _validate_metadata(self, moduleparams):
+        assert self.board_shape[0] in moduleparams["board_shape"][0]
+        assert self.board_shape[1] in moduleparams["board_shape"][1]
+        assert self.board_nhide in moduleparams["board_nhide"]
+        assert self.move_shape[0] in moduleparams["move_shape"][0]
+        assert self.move_shape[1] in moduleparams["move_shape"][1]
+        assert self.color_limit in moduleparams["color_limit"]
+        assert self.pop_limit in moduleparams["pop_limit"]
 
     def _specify_rules(self):
         """
