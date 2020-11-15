@@ -57,7 +57,6 @@ class PuzzleModule:
         module.color_limit = color_limit
         module.pop_limit = pop_limit
         module.modulereadme = modulereadme
-        module.puzzles = []
 
         module._validate_metadata()
 
@@ -68,6 +67,7 @@ class PuzzleModule:
             yaml.dump(module, outfile)
 
         module._specify_rules()
+        module.puzzles = []
 
         return module
 
