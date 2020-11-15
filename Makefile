@@ -8,4 +8,7 @@ docs: clean
 clean:
 	cd docs/ && $(MAKE) clean
 
-.PHONY: test docs clean
+run:
+	PYTHONPATH=/.src python src/main.py
+
+.PHONY: test docs clean run
