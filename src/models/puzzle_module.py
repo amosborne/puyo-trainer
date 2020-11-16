@@ -27,6 +27,22 @@ class PuzzleModule:
     - A puzzle shall have atleast one move.
     """
 
+    def __init__(
+        self,
+        board_shape,
+        board_nhide,
+        move_shape,
+        color_limit,
+        pop_limit,
+        modulereadme,
+    ):
+        self.board_shape = board_shape
+        self.board_nhide = board_nhide
+        self.move_shape = move_shape
+        self.color_limit = color_limit
+        self.pop_limit = pop_limit
+        self.modulereadme = modulereadme
+
     @staticmethod
     def new(
         modulename,
@@ -49,18 +65,14 @@ class PuzzleModule:
         """
 
         # Assign metadata attributes.
-        module = PuzzleModule()
-        module.board_shape = board_shape
-        module.board_nhide = board_nhide
-        module.move_shape = move_shape
-        module.color_limit = color_limit
-        module.pop_limit = pop_limit
-        module.modulereadme = modulereadme
+        module = PuzzleModule(
+            board_shape, board_nhide, move_shape, color_limit, pop_limit, modulereadme
+        )
 
         # Write the metadata file.
         os.mkdir(modulename)
         with open(modulename + METADATA_FILE, "w") as outfile:
-            yaml.dump(module, outfile)
+            yaml.dump(module._toyaml(), outfile)
 
         module._specify_rules()
         module.puzzles = []
@@ -77,7 +89,9 @@ class PuzzleModule:
 
         # Load metadata attributes.
         with open(modulename + METADATA_FILE, "r") as infile:
-            module = yaml.load(infile, Loader=yaml.Loader)
+            safe_data = yaml.safe_load(infile)
+            kwargs = PuzzleModule._fromyaml(safe_data)
+            module = PuzzleModule(**kwargs)
             module._validate_metadata(moduleparams)
             module._specify_rules()
 
@@ -179,3 +193,17 @@ class PuzzleModule:
                 puzzle.moves[idx] = new_move
 
         return True
+
+    def _toyaml(self):
+        dump = self.__dict__
+        for (k, v) in dump.items():
+            if isinstance(v, tuple):
+                dump[k] = list(v)
+        return dump
+
+    @staticmethod
+    def _fromyaml(load):
+        for (k, v) in load.items():
+            if isinstance(v, list):
+                load[k] = tuple(v)
+        return load

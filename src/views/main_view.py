@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import (
     QComboBox,
     QSizePolicy,
     QPushButton,
+    QMessageBox,
 )
 from PyQt5.QtCore import pyqtSignal
 from views.module_view import NewModuleDialog
@@ -29,8 +30,14 @@ class MainControl:
         view.show()
 
     def _load_module(self, module):
-        if module is not None:
-            self.module = PuzzleModule.load(module, self.view.moduleparams)
+        if module:
+            try:
+                self.module = PuzzleModule.load(module, self.view.moduleparams)
+            except AssertionError:
+                self.module = None
+                error_dialog = QMessageBox()
+                error_dialog.setText("Selected module could not be loaded.")
+                error_dialog.exec_()
         else:
             self.module = None
 
