@@ -1,3 +1,12 @@
+from PyQt5.QtWidgets import QMessageBox
+
+
+def ErrorPopup(msg):
+    error_dialog = QMessageBox()
+    error_dialog.setText(msg)
+    error_dialog.exec_()
+
+
 def deleteItemsOfLayout(layout):
     if layout is not None:
         while layout.count():

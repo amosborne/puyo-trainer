@@ -1,5 +1,4 @@
-from models.puzzle_module import PuzzleModule
-from models.puyo_model import Puyo, Direc
+from models import PuzzleModule, Puyo, Direc
 import unittest
 import shutil
 

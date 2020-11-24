@@ -1,5 +1,4 @@
-from models.grid_model import AbstractGrid, BoardGrid, MoveGrid, HoverGrid, Move
-from models.puyo_model import Puyo, Direc
+from models import AbstractGrid, BoardGrid, MoveGrid, HoverGrid, Move, Puyo, Direc
 import unittest
 
 

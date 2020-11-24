@@ -1,4 +1,4 @@
-from models.puyo_model import Puyo, Direc
+from models import Puyo, Direc
 import unittest
 
 

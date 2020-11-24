@@ -1,5 +1,5 @@
-from models.grid_model import BoardGrid, HoverGrid, Move
-from models.puyo_model import Direc
+from models.grid import BoardGrid, HoverGrid, Move
+from models.puyo import Direc
 
 
 class Puzzle:

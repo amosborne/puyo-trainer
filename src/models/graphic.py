@@ -1,5 +1,5 @@
 from collections import namedtuple, defaultdict
-from models.puyo_model import Puyo, Direc
+from models import Puyo, Direc
 
 # An abstraction layer between a grid of puyos and their graphical presentation.
 # This module is designed to work with 512x512px skin files from PPVS2.

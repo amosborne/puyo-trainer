@@ -1,10 +1,10 @@
-from models.puyo_model import Puyo
-from models.puzzle_model import Puzzle
+from models.puyo import Puyo
+from models.puzzle import Puzzle
 from copy import deepcopy
 import os
 import yaml
 
-METADATA_FILE = "/metadata.yml"
+from constants import MODULE_DIRECTORY, MODULE_PARAMETERS, METADATA_FILE
 
 
 class PuzzleModule:
@@ -70,8 +70,8 @@ class PuzzleModule:
         )
 
         # Write the metadata file.
-        os.mkdir(modulename)
-        with open(modulename + METADATA_FILE, "w") as outfile:
+        os.mkdir(MODULE_DIRECTORY + modulename)
+        with open(MODULE_DIRECTORY + modulename + METADATA_FILE, "w") as outfile:
             yaml.dump(module._toyaml(), outfile)
 
         module._specify_rules()
@@ -80,19 +80,18 @@ class PuzzleModule:
         return module
 
     @staticmethod
-    def load(modulename, moduleparams):
+    def load(modulename):
         """
         Args:
             modulename (str): Must be on file (with metadata).
-            moduleparams (dict): Dictionary of min/max for each numeric parameter.
         """
 
         # Load metadata attributes.
-        with open(modulename + METADATA_FILE, "r") as infile:
+        with open(MODULE_DIRECTORY + modulename + METADATA_FILE, "r") as infile:
             safe_data = yaml.safe_load(infile)
             kwargs = PuzzleModule._fromyaml(safe_data)
             module = PuzzleModule(**kwargs)
-            module._validate_metadata(moduleparams)
+            module._validate_metadata()
             module._specify_rules()
 
         # TODO: load all puzzles in module, check all rules and compatability
@@ -109,14 +108,14 @@ class PuzzleModule:
         # TODO: check compatability
         self.puzzles.append(puzzle)
 
-    def _validate_metadata(self, moduleparams):
-        assert self.board_shape[0] in moduleparams["board_shape"][0]
-        assert self.board_shape[1] in moduleparams["board_shape"][1]
-        assert self.board_nhide in moduleparams["board_nhide"]
-        assert self.move_shape[0] in moduleparams["move_shape"][0]
-        assert self.move_shape[1] in moduleparams["move_shape"][1]
-        assert self.color_limit in moduleparams["color_limit"]
-        assert self.pop_limit in moduleparams["pop_limit"]
+    def _validate_metadata(self):
+        assert self.board_shape[0] in MODULE_PARAMETERS["board_shape"][0]
+        assert self.board_shape[1] in MODULE_PARAMETERS["board_shape"][1]
+        assert self.board_nhide in MODULE_PARAMETERS["board_nhide"]
+        assert self.move_shape[0] in MODULE_PARAMETERS["move_shape"][0]
+        assert self.move_shape[1] in MODULE_PARAMETERS["move_shape"][1]
+        assert self.color_limit in MODULE_PARAMETERS["color_limit"]
+        assert self.pop_limit in MODULE_PARAMETERS["pop_limit"]
 
     def _specify_rules(self):
         """

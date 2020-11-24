@@ -1,7 +1,7 @@
 import numpy as np
 from collections import namedtuple
 from pandas import DataFrame
-from models.puyo_model import Puyo, Direc
+from models.puyo import Puyo, Direc
 from copy import deepcopy
 
 
