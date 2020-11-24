@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel
 from PyQt5.QtCore import pyqtSignal, Qt
-from views.puyo_view import PuyoGridView
-from views.qtutils import deleteItemOfLayout
+from viewcontrols.gamepage.puyo import PuyoGridView
+from viewcontrols.qtutils import deleteItemOfLayout
 
 
 class GameView(QWidget):

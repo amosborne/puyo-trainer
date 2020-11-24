@@ -1,6 +1,6 @@
-from models.graphic_model import PuyoGraphicModel  # model
-from views.edit_view import EditorView  # view
-from controls.game_control import GameVC  # controller
+from models import PuyoGraphicModel  # model
+from viewcontrols.gamepage.edit import EditorView  # view
+from viewcontrols.gamepage.player import GameVC  # controller
 
 
 # View-controller of the puzzle editor GUI.

@@ -98,16 +98,6 @@ class PuzzleModule:
 
         return module
 
-    def new_puzzle(self, puzzle_copy=None):
-        if puzzle_copy is not None:
-            return deepcopy(puzzle_copy)
-        else:
-            return Puzzle.new(self)
-
-    def save_puzzle(self, puzzle):
-        # TODO: check compatability
-        self.puzzles.append(puzzle)
-
     def _validate_metadata(self):
         assert self.board_shape[0] in MODULE_PARAMETERS["board_shape"][0]
         assert self.board_shape[1] in MODULE_PARAMETERS["board_shape"][1]

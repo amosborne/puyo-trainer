@@ -10,8 +10,8 @@ from PyQt5.QtWidgets import (
     QStackedWidget,
 )
 from PyQt5.QtCore import Qt, pyqtSignal
-from views.puyo_view import PuyoGridView
-from views.game_view import GameView
+from viewcontrols.gamepage.puyo import PuyoGridView
+from viewcontrols.gamepage.game import GameView
 
 
 """

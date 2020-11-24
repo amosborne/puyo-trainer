@@ -1,5 +1,4 @@
-from models.puyo_model import Direc
-from models.grid_model import Move
+from models import Direc, Move
 from copy import deepcopy
 
 

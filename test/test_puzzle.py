@@ -1,4 +1,4 @@
-from models import PuzzleModule, Puyo, Direc
+from models import PuzzleModule, Puzzle, Puyo, Direc
 import unittest
 import shutil
 
@@ -16,7 +16,7 @@ def buildup_teardown():
                 pop_limit=4,
                 modulereadme="",
             )
-            puzzle = module.new_puzzle()
+            puzzle = Puzzle.new(module)
             func(*args, module, puzzle, **kwargs)
             shutil.rmtree("./modules/" + name + "/")
 

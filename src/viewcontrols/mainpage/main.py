@@ -14,13 +14,24 @@ from PyQt5.QtCore import pyqtSignal
 import os
 from viewcontrols.qtutils import ErrorPopup, deleteItemOfLayout
 from viewcontrols.mainpage.module import NewModuleDialog, ViewModuleFormLayout
-from models import PuzzleModule
+from viewcontrols.gamepage.editor import EditorVC
+from models import PuzzleModule, Puzzle
 from constants import (
     SKIN_DIRECTORY,
     MODULE_DIRECTORY,
     PUZZLE_FILE_ROOT,
     PUZZLE_FILE_EXT,
 )
+
+
+def check_module(func):
+    def wrapper(*args, **kwargs):
+        if args[0].module is None:
+            ErrorPopup("No module is loaded.")
+        else:
+            return func(*args, **kwargs)
+
+    return wrapper
 
 
 class MainControl:
@@ -57,23 +68,24 @@ class MainControl:
 
         dialog.accepted.connect(create_module)
 
+    @check_module
     def _test_module(self, skin, movelen, fbdelay):
-        if self.module is None:
-            ErrorPopup("No module is loaded.")
-        else:
-            print(
-                "TESTING MODULE (skin: "
-                + skin
-                + ", moves: "
-                + str(movelen)
-                + ", period: "
-                + str(fbdelay)
-                + ")"
-            )
+        print(
+            "TESTING MODULE (skin: "
+            + skin
+            + ", moves: "
+            + str(movelen)
+            + ", period: "
+            + str(fbdelay)
+            + ")"
+        )
 
+    @check_module
     def _new_puzzle(self, skin):
         print("NEW PUZZLE (skin: " + skin + ")")
+        puzzle = Puzzle.new(self.module)
 
+    @check_module
     def _review_puzzle(self, skin, puzzle):
         print("REVIEWING PUZZLE (skin: " + skin + ", puzzle: " + puzzle + ")")
 
@@ -119,6 +131,9 @@ class MainView(QMainWindow):
         deleteItemOfLayout(self.layout, 2)
         self.layout.insertLayout(2, new_module_layout)
         self.module_layout = new_module_layout
+
+        if module is None:
+            self._updatePuzzleSelector(empty=True)
 
     def addModuleSelector(self, modulename):
         self.module_selector.addItem(modulename, userData=modulename)
@@ -230,9 +245,11 @@ class MainView(QMainWindow):
         puzzle_select_layout.addWidget(puzcombo)
         self.layout.addLayout(puzzle_select_layout)
 
-    def _updatePuzzleSelector(self):
+    def _updatePuzzleSelector(self, empty=False):
         for idx in range(self.puzzle_selector.count()):
             self.puzzle_selector.removeItem(idx)
+            if empty:
+                return
 
         _, _, filenames = next(os.walk(MODULE_DIRECTORY + self.module()))
         puzzle_files = [
