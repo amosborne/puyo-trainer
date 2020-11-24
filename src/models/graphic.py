@@ -1,16 +1,20 @@
 from collections import namedtuple, defaultdict
+from itertools import chain
 from models import Puyo, Direc
+from constants import SKIN_DIRECTORY
 
 # An abstraction layer between a grid of puyos and their graphical presentation.
 # This module is designed to work with 512x512px skin files from PPVS2.
 class PuyoGraphicModel:
     def __init__(self, skin, grid, ghosts=set()):
-        self.skin = skin
+        self.skin = SKIN_DIRECTORY + skin
         self.grid = grid
         self.ghosts = ghosts
 
-    # Iteration through ghosts not yet implemented.
     def __iter__(self):
+        return chain(self._iter_puyos(), self._iter_ghosts())
+
+    def _iter_puyos(self):
         for elem in self.grid:
             px_row = SKIN_ROW_MAP[elem.puyo]
 
@@ -37,6 +41,8 @@ class PuyoGraphicModel:
                 px_col = SKIN_COL_MAP[adj_match]
 
             rect = tuple(px * SKIN_SIZE for px in (px_col, px_row, 1, 1))
+            rect = (rect[0] + 1, rect[1] + 1, rect[2] - 1, rect[3] - 1)
+
             if self.grid.is_hidden(elem.pos) and elem.puyo is not Puyo.NONE:
                 opacity = 0.5
             else:
@@ -44,6 +50,7 @@ class PuyoGraphicModel:
 
             yield Graphic(elem.pos, rect, opacity)
 
+    def _iter_ghosts(self):
         for elem in self.ghosts:
             px_row = GHOST_ROW
             px_col = SKIN_GHOST_MAP[elem.puyo]
@@ -65,10 +72,10 @@ SKIN_ROW_MAP[Puyo.BLUE] = 2
 SKIN_ROW_MAP[Puyo.YELLOW] = 3
 SKIN_ROW_MAP[Puyo.PURPLE] = 4
 SKIN_ROW_MAP[Puyo.GARBAGE] = 12
-SKIN_ROW_MAP[Puyo.NONE] = 9
+SKIN_ROW_MAP[Puyo.NONE] = 15
 
 GARBAGE_COL = 6
-NONE_COL = 0
+NONE_COL = 8
 
 SKIN_COL_MAP = defaultdict(int)
 SKIN_COL_MAP[AdjMatch(north=False, south=False, east=False, west=False)] = 0

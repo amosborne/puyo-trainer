@@ -82,8 +82,8 @@ class MainControl:
 
     @check_module
     def _new_puzzle(self, skin):
-        print("NEW PUZZLE (skin: " + skin + ")")
         puzzle = Puzzle.new(self.module)
+        editor = EditorVC(puzzle, skin, self.view)
 
     @check_module
     def _review_puzzle(self, skin, puzzle):

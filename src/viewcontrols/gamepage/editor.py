@@ -2,16 +2,15 @@ from models import PuyoGraphicModel  # model
 from viewcontrols.gamepage.edit import EditorView  # view
 from viewcontrols.gamepage.player import GameVC  # controller
 
-
 # View-controller of the puzzle editor GUI.
 # Manages view callbacks and keeps the model and view synchronized.
 class EditorVC:
-    def __init__(self, puzzle, skin):
+    def __init__(self, puzzle, skin, parent=None):
         board_graphic = PuyoGraphicModel(skin, puzzle.board)
         move_graphics = [PuyoGraphicModel(skin, move.grid) for move in puzzle.moves]
         hover_graphics = PuyoGraphicModel(skin, puzzle.hover)
 
-        self.view = EditorView(board_graphic, move_graphics, hover_graphics)
+        self.view = EditorView(board_graphic, move_graphics, hover_graphics, parent)
 
         self.game_controller = GameVC(puzzle, self.view.solverview.gameview)
 
@@ -19,6 +18,8 @@ class EditorVC:
         self.puzzle = puzzle
         self.bindDefineView()
         self.bindSolverView()
+
+        self.view.show()
 
     def bindDefineView(self):
         model = self.puzzle
