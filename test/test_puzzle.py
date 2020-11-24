@@ -16,7 +16,7 @@ def buildup_teardown():
                 pop_limit=4,
                 modulereadme="",
             )
-            puzzle = Puzzle.new(module)
+            puzzle = Puzzle.new(module, "unittest")
             func(*args, module, puzzle, **kwargs)
             shutil.rmtree("./modules/" + name + "/")
 

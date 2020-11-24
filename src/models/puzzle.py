@@ -1,9 +1,10 @@
 from models.grid import BoardGrid, HoverGrid, Move
-from models.puyo import Direc
+from models.puyo import Direc, Puyo
 from constants import PUZZLE_FILE_ROOT, PUZZLE_FILE_EXT, MODULE_DIRECTORY
 import os
 import yaml
 from copy import deepcopy
+import numpy as np
 
 
 class Puzzle:
@@ -22,9 +23,34 @@ class Puzzle:
 
     @staticmethod
     def load(puzzlename, path, module):
+        def yaml2board(yml):
+            board = BoardGrid.new(shape=module.board_shape, nhide=module.board_nhide)
+            str_board = list(reversed([s.split(" ") for s in yml]))
+            for (row, col), puyo_str in np.ndenumerate(str_board):
+                board[row, col] = Puyo[puyo_str]
+
+            return board
+
+        def yaml2move(yml):
+            move = Move(
+                shape=module.move_shape, col=yml["col"], direc=Direc[yml["direc"]]
+            )
+            str_grid = list(reversed([s.split(" ") for s in yml["grid"]]))
+            for (row, col), puyo_str in np.ndenumerate(str_grid):
+                move.grid[row, col] = Puyo[puyo_str]
+            return move
+
         with open(MODULE_DIRECTORY + path + "/" + puzzlename, "r") as infile:
             safe_data = yaml.safe_load(infile)
-            print(safe_data)
+
+        puzzle = Puzzle()
+        puzzle.board = yaml2board(safe_data["board"])
+        puzzle.moves = [yaml2move(move) for move in safe_data["moves"]]
+        puzzle.module = module
+        puzzle.hover = HoverGrid.new(module.board_shape, module.move_shape)
+        puzzle.path = MODULE_DIRECTORY + path
+
+        return puzzle
 
     def save(self):
         def grid2list(grid):
