@@ -109,6 +109,8 @@ class PuzzleModule:
                 continue
 
             puzzle = Puzzle.load(filename, modulename, module)
+            assert puzzle.apply_rules()
+
             module.puzzles[filename] = puzzle
 
         return module
@@ -136,9 +138,17 @@ class PuzzleModule:
         rules.append(self._rule_minimum_move_size)  # has force
         rules.append(self._rule_color_limit)
         rules.append(self._rule_move_fits_horizontally)  # has force
-        # TODO: Add rule -- no floating puyos (no corrective action)
-        # TODO: Add rule -- no pop groups (no corrective action)
+        rules.append(self._rule_no_floating_puyos)
+        rules.append(self._rule_no_pop_groups)
         self.rules = rules
+
+    def _rule_no_pop_groups(self, puzzle, force):
+        # print(puzzle.board.pop_set(self.pop_limit))
+        return True
+
+    def _rule_no_floating_puyos(self, puzzle, force):
+        board_copy = deepcopy(puzzle.board)
+        return board_copy.gravitize() == puzzle.board
 
     def _rule_metadata_matches_board_shape(self, puzzle, force):
         visr, visc = self.board_shape

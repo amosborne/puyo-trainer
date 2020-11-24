@@ -191,6 +191,37 @@ class BoardGrid(AbstractGrid):
         else:
             return np.argmin(self._board[:, idx] != Puyo.NONE)
 
+    def pop_set(self, poplimit):
+        popset = set()
+        for elem in self:
+            if not Puyo.is_color(elem.puyo):
+                continue
+
+            popgroup = set({elem})
+            while True:
+                last_popgroup = popgroup.copy()
+                for elem in last_popgroup:
+                    if not Puyo.is_color(elem.puyo):
+                        continue
+                    elif self.is_hidden(elem.pos):
+                        continue
+
+                    adjelems = self.adjacent(elem.pos)
+                    adjelems = {adj for adj in adjelems if not self.is_hidden(adj.pos)}
+                    popgroup |= {adj for adj in adjelems if adj.puyo is Puyo.GARBAGE}
+                    popgroup |= {adj for adj in adjelems if adj.puyo is elem.puyo}
+
+                if last_popgroup == popgroup:
+                    break
+
+            if len({elem for elem in popgroup if Puyo.is_color(elem.puyo)}) >= poplimit:
+                popset |= popgroup
+
+        return popset
+
+    def execute_pop(self):
+        pass
+
     def apply_move(self, move):
         """Apply the given move to the board and return **self**."""
 

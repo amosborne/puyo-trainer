@@ -67,6 +67,15 @@ class EditorVC:
             if model.apply_rules():
                 self.view.centralWidget().setCurrentWidget(self.view.solverview)
                 self.game_controller.reset()
+            else:
+                ErrorPopup(
+                    (
+                        "Malformed initial board. Check:\n"
+                        "- Color count\n"
+                        "- Floating puyos\n"
+                        "- Pop groups."
+                    )
+                )
 
         view.click_board_puyos.connect(changeBoardElem)
         view.click_drawpile_puyos.connect(changeDrawpileElem)

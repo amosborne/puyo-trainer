@@ -267,3 +267,46 @@ class TestBoardGrid(unittest.TestCase):
         result[2, 1] = Puyo.BLUE
         result[0:2, 2] = Puyo.RED
         self.assertEqual(board.apply_move(move), result)
+
+    def test_simple_pop(self):
+        board = BoardGrid.new(shape=(2, 2), nhide=1)
+        board[0, 0] = Puyo.RED
+        board[1, 0] = Puyo.RED
+        board[0, 1] = Puyo.BLUE
+        board[1, 1] = Puyo.RED
+
+        predict = {((0, 0), Puyo.RED), ((1, 0), Puyo.RED), ((1, 1), Puyo.RED)}
+        result = board.pop_set(2)
+        self.assertEqual(predict, result)
+
+        predict = set()
+        result = board.pop_set(4)
+        self.assertEqual(predict, result)
+
+    def test_hidden_pop(self):
+        board = BoardGrid.new(shape=(2, 2), nhide=1)
+        board[0, 0] = Puyo.RED
+        board[1, 0] = Puyo.RED
+        board[2, 0] = Puyo.RED
+
+        predict = {((0, 0), Puyo.RED), ((1, 0), Puyo.RED)}
+        result = board.pop_set(2)
+        self.assertEqual(predict, result)
+
+    def test_garbage_pop(self):
+        board = BoardGrid.new(shape=(3, 3), nhide=1)
+        board[:, 0] = Puyo.RED
+        board[0, 1:] = Puyo.GARBAGE
+
+        predict = {
+            ((0, 0), Puyo.RED),
+            ((1, 0), Puyo.RED),
+            ((2, 0), Puyo.RED),
+            ((0, 1), Puyo.GARBAGE),
+        }
+        result = board.pop_set(3)
+        self.assertEqual(predict, result)
+
+        predict = set()
+        result = board.pop_set(4)
+        self.assertEqual(predict, result)
