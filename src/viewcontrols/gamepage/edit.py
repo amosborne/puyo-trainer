@@ -178,6 +178,8 @@ class PuzzleSolveView(QWidget):
 
 
 class EditorView(QMainWindow):
+    close_window = pyqtSignal()
+
     def __init__(self, board, drawpile, hoverarea, parent=None):
         super().__init__(parent)
 
@@ -187,3 +189,7 @@ class EditorView(QMainWindow):
         self.setCentralWidget(QStackedWidget())
         self.centralWidget().addWidget(self.defineview)
         self.centralWidget().addWidget(self.solverview)
+
+    def closeEvent(self, event):
+        self.close_window.emit()
+        super().closeEvent(event)

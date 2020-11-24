@@ -1,6 +1,7 @@
 from models import PuyoGraphicModel  # model
 from viewcontrols.gamepage.edit import EditorView  # view
 from viewcontrols.gamepage.player import GameVC  # controller
+from viewcontrols.qtutils import ErrorPopup
 
 # View-controller of the puzzle editor GUI.
 # Manages view callbacks and keeps the model and view synchronized.
@@ -84,5 +85,13 @@ class EditorVC:
             model.board.revert()
             view.gameview.board.ghosts = set()
 
+        def savePuzzle():
+            # check if all moves have been input
+            if not len(self.puzzle.moves) == len(self.puzzle.board._boardlist):
+                ErrorPopup("Input all moves prior to saving.")
+            else:
+                self.puzzle.save()
+                self.view.close()
+
         view.click_back.connect(exitSolver)
-        view.click_save.connect(lambda: print("save and exit!"))
+        view.click_save.connect(savePuzzle)

@@ -1,23 +1,54 @@
 from models.grid import BoardGrid, HoverGrid, Move
 from models.puyo import Direc
+from constants import PUZZLE_FILE_ROOT, PUZZLE_FILE_EXT, MODULE_DIRECTORY
+import os
+import yaml
+from copy import deepcopy
 
 
 class Puzzle:
     @staticmethod
-    def new(module):
+    def new(module, path):
         puzzle = Puzzle()
         puzzle.board = BoardGrid.new(shape=module.board_shape, nhide=module.board_nhide)
         puzzle.moves = []
         puzzle.hover = HoverGrid.new(module.board_shape, module.move_shape)
         puzzle.module = module
+        puzzle.path = MODULE_DIRECTORY + path
 
         puzzle.apply_rules(force=True)
 
         return puzzle
 
     @staticmethod
-    def load(puzzlename, rules):
-        pass
+    def load(puzzlename, path, module):
+        with open(MODULE_DIRECTORY + path + "/" + puzzlename, "r") as infile:
+            safe_data = yaml.safe_load(infile)
+            print(safe_data)
+
+    def save(self):
+        def grid2list(grid):
+            grid = grid._board.tolist()
+            grid = [" ".join([puyo.name for puyo in row]) for row in grid]
+            return list(reversed(grid))
+
+        puzzle_to_save = deepcopy(self)
+        puzzle_to_save.board.revert()
+
+        filename = next_puzzle_name(puzzle_to_save.path)
+        filepath = puzzle_to_save.path + "/" + filename
+
+        data = dict()
+        data["board"] = grid2list(puzzle_to_save.board)
+        data["moves"] = [
+            {"grid": grid2list(move.grid), "col": move.col, "direc": move.direc.name}
+            for move in puzzle_to_save.moves
+        ]
+
+        with open(filepath, "w") as outfile:
+            yaml.dump(data, outfile)
+
+        self.module.puzzles[filename] = puzzle_to_save
 
     def apply_rules(self, force=False):
         return all([rule(self, force) for rule in self.module.rules])
@@ -44,3 +75,15 @@ class Puzzle:
             pstring += self.hover.assign_move(move).__str__()
 
         return pstring
+
+
+def next_puzzle_name(path):
+    def ind2name(idx):
+        return PUZZLE_FILE_ROOT + str(idx + 1) + PUZZLE_FILE_EXT
+
+    _, _, filenames = next(os.walk(path))
+    idx = 0
+    while ind2name(idx) in filenames:
+        idx += 1
+
+    return ind2name(idx)

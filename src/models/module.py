@@ -4,7 +4,13 @@ from copy import deepcopy
 import os
 import yaml
 
-from constants import MODULE_DIRECTORY, MODULE_PARAMETERS, METADATA_FILE
+from constants import (
+    MODULE_DIRECTORY,
+    MODULE_PARAMETERS,
+    METADATA_FILE,
+    PUZZLE_FILE_EXT,
+    PUZZLE_FILE_ROOT,
+)
 
 
 class PuzzleModule:
@@ -75,7 +81,7 @@ class PuzzleModule:
             yaml.dump(module._toyaml(), outfile)
 
         module._specify_rules()
-        module.puzzles = []
+        module.puzzles = {}
 
         return module
 
@@ -94,7 +100,16 @@ class PuzzleModule:
             module._validate_metadata()
             module._specify_rules()
 
-        # TODO: load all puzzles in module, check all rules and compatability
+        module.puzzles = {}
+        _, _, filenames = next(os.walk(MODULE_DIRECTORY + modulename))
+        for filename in filenames:
+            if not filename.startswith(PUZZLE_FILE_ROOT):
+                continue
+            elif not filename.endswith(PUZZLE_FILE_EXT):
+                continue
+
+            puzzle = Puzzle.load(filename, modulename, module)
+            module.puzzles[filename] = puzzle
 
         return module
 

@@ -82,8 +82,10 @@ class MainControl:
 
     @check_module
     def _new_puzzle(self, skin):
-        puzzle = Puzzle.new(self.module)
+        puzzle = Puzzle.new(self.module, self.view.module())
         editor = EditorVC(puzzle, skin, self.view)
+
+        editor.view.close_window.connect(self.view._updatePuzzleSelector)
 
     @check_module
     def _review_puzzle(self, skin, puzzle):
