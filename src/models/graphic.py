@@ -2,12 +2,15 @@ from collections import namedtuple, defaultdict
 from itertools import chain
 from models import Puyo, Direc
 from constants import SKIN_DIRECTORY
+import cv2
+import numpy as np
 
 # An abstraction layer between a grid of puyos and their graphical presentation.
 # This module is designed to work with 512x512px skin files from PPVS2.
 class PuyoGraphicModel:
     def __init__(self, skin, grid, ghosts=set()):
-        self.skin = SKIN_DIRECTORY + skin
+        bgr_skin = cv2.imread(SKIN_DIRECTORY + skin, cv2.IMREAD_UNCHANGED)
+        self.skin = cv2.cvtColor(bgr_skin, cv2.COLOR_BGRA2RGBA)
         self.grid = grid
         self.ghosts = ghosts
 
@@ -40,27 +43,35 @@ class PuyoGraphicModel:
                 adj_match = AdjMatch(north, south, east, west)
                 px_col = SKIN_COL_MAP[adj_match]
 
-            rect = tuple(px * SKIN_SIZE for px in (px_col, px_row, 1, 1))
-            rect = (rect[0] + 1, rect[1] + 1, rect[2] - 1, rect[3] - 1)
+            image = self.skin[
+                px_row * SKIN_SIZE + 1 : (px_row + 1) * SKIN_SIZE - 1,
+                px_col * SKIN_SIZE + 1 : (px_col + 1) * SKIN_SIZE - 1,
+            ]
 
             if self.grid.is_hidden(elem.pos) and elem.puyo is not Puyo.NONE:
                 opacity = 0.5
             else:
                 opacity = 1
 
-            yield Graphic(elem.pos, rect, opacity)
+            yield Graphic(elem.pos, image, opacity)
 
     def _iter_ghosts(self):
         for elem in self.ghosts:
-            px_row = GHOST_ROW
-            px_col = SKIN_GHOST_MAP[elem.puyo]
-            rect = [px * SKIN_SIZE for px in (px_col, px_row, 1, 1)]
-            rect[0] = rect[0] - int(SKIN_SIZE / 4) + 2
-            rect[1] = rect[1] - 8
-            yield Graphic(elem.pos, tuple(rect), 1)
+            px_row, px_col = SKIN_GHOST_MAP[elem.puyo]
+            image = self.skin[
+                px_row * GHOST_SIZE + 1 : (px_row + 1) * GHOST_SIZE - 1,
+                px_col * GHOST_SIZE + 1 : (px_col + 1) * GHOST_SIZE - 1,
+            ]
+
+            padsize = SKIN_SIZE - GHOST_SIZE
+            image = cv2.copyMakeBorder(
+                image, padsize, padsize, padsize, padsize, cv2.BORDER_CONSTANT
+            )
+
+            yield Graphic(elem.pos, image, 1)
 
 
-Graphic = namedtuple("Graphic", "pos, rect, opacity")
+Graphic = namedtuple("Graphic", "pos, image, opacity")
 
 AdjMatch = namedtuple("AdjMatch", "north, south, east, west")
 
@@ -95,10 +106,10 @@ SKIN_COL_MAP[AdjMatch(north=False, south=True, east=True, west=True)] = 13
 SKIN_COL_MAP[AdjMatch(north=True, south=False, east=True, west=True)] = 14
 SKIN_COL_MAP[AdjMatch(north=True, south=True, east=True, west=True)] = 15
 
-GHOST_ROW = 11
+GHOST_SIZE = int(SKIN_SIZE / 2)
 SKIN_GHOST_MAP = defaultdict(int)
-SKIN_GHOST_MAP[Puyo.RED] = 5
-SKIN_GHOST_MAP[Puyo.GREEN] = 6
-SKIN_GHOST_MAP[Puyo.BLUE] = 7
-SKIN_GHOST_MAP[Puyo.YELLOW] = 8
-SKIN_GHOST_MAP[Puyo.PURPLE] = 9
+SKIN_GHOST_MAP[Puyo.RED] = (14, 29)
+SKIN_GHOST_MAP[Puyo.GREEN] = (15, 29)
+SKIN_GHOST_MAP[Puyo.BLUE] = (16, 29)
+SKIN_GHOST_MAP[Puyo.YELLOW] = (14, 28)
+SKIN_GHOST_MAP[Puyo.PURPLE] = (15, 28)
