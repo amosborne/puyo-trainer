@@ -1,6 +1,8 @@
 SKIN_DIRECTORY = "./ppvs2_skins/"
 MODULE_DIRECTORY = "./modules/"
 METADATA_FILE = "/metadata.yml"
+PUZZLE_FILE_ROOT = "puzzle_"
+PUZZLE_FILE_EXT = ".yml"
 MODULE_PARAMETERS = {
     "board_shape": (range(12, 27), range(6, 17)),
     "board_nhide": range(1, 3),

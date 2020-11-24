@@ -2,9 +2,9 @@ from PyQt5.QtWidgets import (
     QDialog,
     QLabel,
     QHBoxLayout,
+    QGridLayout,
     QComboBox,
     QFormLayout,
-    QVBoxLayout,
     QPushButton,
     QLineEdit,
     QPlainTextEdit,
@@ -21,8 +21,7 @@ class NewModuleDialog(QDialog):
         super().__init__(parent)
         self.setWindowModality(Qt.WindowModal)
 
-        layout = QVBoxLayout(self)
-        form = EditModuleFormLayout()
+        form = EditModuleFormLayout(self)
         quit_button = QPushButton("Cancel")
         ok_button = QPushButton("Apply")
 
@@ -32,13 +31,11 @@ class NewModuleDialog(QDialog):
         quit_button.clicked.connect(self.reject)
         ok_button.clicked.connect(self._validateModule)
 
-        layout.addLayout(form)
-        button_layout = QHBoxLayout()
-        button_layout.addWidget(quit_button)
-        button_layout.addWidget(ok_button)
-        layout.addLayout(button_layout)
-
+        form.addWidget(quit_button, 1, 0)
+        form.addWidget(ok_button, 1, 1)
         self.form = form
+
+        self.setWindowTitle("New Module")
 
     @property
     def module_kwargs(self):
@@ -52,7 +49,7 @@ class NewModuleDialog(QDialog):
             self.accept()
 
 
-class AbstractModuleFormLayout(QHBoxLayout):
+class AbstractModuleFormLayout(QGridLayout):
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -60,12 +57,15 @@ class AbstractModuleFormLayout(QHBoxLayout):
 
         readme = QPlainTextEdit()
         readme.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Ignored)
-        self.addWidget(readme)
+        self.addWidget(readme, 0, 1)
         self.readme = readme
+
+        self.setColumnStretch(0, 1)
+        self.setColumnStretch(1, 1)
 
     def _buildForm(self):
         form = QFormLayout()
-        self.addLayout(form)
+        self.addLayout(form, 0, 0)
         self.form = form
 
         self._addFormRow(
@@ -175,4 +175,5 @@ class ViewModuleFormLayout(AbstractModuleFormLayout):
             combined += " " + str(value) + " " + str(label)
 
         layout.addWidget(QLabel(combined))
+        layout.addStretch()
         super()._addFormRow(formname, layout)
