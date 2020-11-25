@@ -1,26 +1,26 @@
-from models import Direc
+from models import Direc, PopState, grid2graphics
 from copy import deepcopy
 from PyQt5.QtCore import QTimer
 from constants import POP_SPEED
 
 
-def try_and_update(func):
+def animate(func):
     def wrapper(self):
-        if self.timer.isActive():
-            return
-        try:
-            func(self)
-            self.model.apply_rules(force=True)
-            self._animatePop(True)
-        except IndexError:
-            pass
+        if not self.timer.isActive():
+            try:
+                func(self)
+                self.puzzle.apply_rules(force=True)
+                self.animate()
+            except IndexError:
+                pass
 
     return wrapper
 
 
-class GameVC:
-    def __init__(self, puzzle, view):
-        self.model = puzzle
+class PlayVC:
+    def __init__(self, skin, puzzle, view):
+        self.skin = skin
+        self.puzzle = puzzle
         self.view = view
 
         view.pressX.connect(self.rotateRight)
@@ -30,80 +30,109 @@ class GameVC:
         view.pressUp.connect(self.revertMove)
         view.pressDown.connect(self.makeMove)
 
-        timer = QTimer(self.view)
-        timer.setSingleShot(True)
-        timer.setInterval(POP_SPEED * 1000)
-        self.timer = timer
+        self.draw_index = 0
+        self.animate()
 
-    @try_and_update
+    @animate
     def rotateRight(self):
-        move = self.model.moves[self.draw_index]
+        move = self.puzzle.moves[self.draw_index]
         move.direc = Direc.rotate_cw(move.direc)
 
-    @try_and_update
+    @animate
     def rotateLeft(self):
-        move = self.model.moves[self.draw_index]
+        move = self.puzzle.moves[self.draw_index]
         move.direc = Direc.rotate_ccw(move.direc)
 
-    @try_and_update
+    @animate
     def shiftRight(self):
-        self.model.moves[self.draw_index].col += 1
+        self.puzzle.moves[self.draw_index].col += 1
 
-    @try_and_update
+    @animate
     def shiftLeft(self):
-        self.model.moves[self.draw_index].col -= 1
+        self.puzzle.moves[self.draw_index].col -= 1
 
-    @try_and_update
+    @animate
     def makeMove(self):
-        self.model.board.apply_move(self.model.moves[self.draw_index])
+        self.puzzle.board.apply_move(self.puzzle.moves[self.draw_index])
         self.draw_index += 1
 
-    @try_and_update
+    @animate
     def revertMove(self):
         if self.draw_index > 0:
             self.draw_index -= 1
-            self.model.board.revert_move()
+            self.puzzle.board.revert_move()
 
     def reset(self):
         self.draw_index = 0
-        self._animatePop(True)
+        self.animate()
+        self.view.setFocus()
 
-    def _animatePop(self, popearly):
-        try:
-            move = self.model.moves[self.draw_index]
-        except IndexError:
-            move = None
-
-        self.model.hover.assign_move(move)
-
-        self.view.board.ghosts = set()
-        popset = self.view.board.grid.pop_set(self.model.module.pop_limit)
-
+    def animate(self, popstate=PopState.PREPOP):
+        # Create a timer for the pop animation.
         timer = QTimer(self.view)
         timer.setSingleShot(True)
         timer.setInterval(POP_SPEED * 1000)
         self.timer = timer
 
+        # Check for a pop and animate (recursively).
+        popset = self.puzzle.board.pop_set(self.puzzle.module.pop_limit)
         if popset:
-            self.view.board.popset = popset
-            self.view.board.popearly = popearly
-            self.view.updateView(self.draw_index)
+            # Empty the hover grid.
+            self.puzzle.hover.assign_move(None)
+            hover_gfx = grid2graphics(self.skin, self.puzzle.hover)
 
-            if popearly:
-                self.timer.timeout.connect(lambda: self._animatePop(False))
-            else:
-                self.model.board.execute_pop(self.model.module.pop_limit)
-                self.timer.timeout.connect(lambda: self._animatePop(True))
+            # Get the visible drawpile.
+            draw_gfx = [grid2graphics(self.skin, mv.grid) for mv in self.puzzle.moves]
+            draw_gfx = draw_gfx[self.draw_index : self.draw_index + 2]
 
+            # Calculate remaining.
+            nremaining = len(self.puzzle.moves) - self.draw_index
+
+            # Get the board graphics.
+            board_gfx = grid2graphics(
+                skin=self.skin,
+                grid=self.puzzle.board,
+                ghosts=set(),
+                pops=popset,
+                popstate=popstate,
+            )
+
+            self.view.setGraphics(board_gfx, draw_gfx, hover_gfx, nremaining)
+
+            # Start the timer to update the animation at the next pop state.
+            self.timer.timeout.connect(lambda: self.animate(popstate._next()))
             self.timer.start()
 
-        else:
-            if move is not None:
-                future_board = deepcopy(self.model.board)
-                future_board.apply_move(move)
-                self.view.board.ghosts = future_board - self.model.board
-            else:
-                self.view.board.ghosts = set()
+            # If at the final pop state in the animation, execute the pop.
+            if popstate is PopState.POPLATER:
+                self.puzzle.board.execute_pop(self.puzzle.module.pop_limit)
 
-            self.view.board.popset = set()
-            self.view.updateView(self.draw_index)
+        else:
+            # Assign a move, if available, to the hover grid.
+            try:
+                move = self.puzzle.moves[self.draw_index]
+            except IndexError:
+                move = None
+
+            self.puzzle.hover.assign_move(move)
+            hover_gfx = grid2graphics(self.skin, self.puzzle.hover)
+
+            # Get the visible drawpile.
+            draw_gfx = [grid2graphics(self.skin, mv.grid) for mv in self.puzzle.moves]
+            draw_gfx = draw_gfx[self.draw_index + 1 : self.draw_index + 3]
+
+            # Calculate remaining.
+            nremaining = len(self.puzzle.moves) - self.draw_index
+
+            # Find the ghosts.
+            if move is not None:
+                future_board = deepcopy(self.puzzle.board)
+                future_board.apply_move(move)
+                ghosts = future_board - self.puzzle.board
+            else:
+                ghosts = set()
+
+            # Get the board graphics.
+            board_gfx = grid2graphics(self.skin, self.puzzle.board, ghosts)
+
+            self.view.setGraphics(board_gfx, draw_gfx, hover_gfx, nremaining)

@@ -1,71 +1,71 @@
-from models import PuyoGraphicModel  # model
+from models import grid2graphics, Puyo
 from viewcontrols.gamepage.edit import EditorView  # view
-from viewcontrols.gamepage.player import GameVC  # controller
+from viewcontrols.gamepage.player import PlayVC  # sub-view-controller
 from viewcontrols.qtutils import ErrorPopup
 
 # View-controller of the puzzle editor GUI.
 # Manages view callbacks and keeps the model and view synchronized.
 class EditorVC:
     def __init__(self, puzzle, skin, parent=None):
-        board_graphic = PuyoGraphicModel(skin, puzzle.board)
-        move_graphics = [PuyoGraphicModel(skin, move.grid) for move in puzzle.moves]
-        hover_graphics = PuyoGraphicModel(skin, puzzle.hover)
-
-        self.view = EditorView(board_graphic, move_graphics, hover_graphics, parent)
-        self.view.setWindowTitle("New Puzzle (" + puzzle.path + ")")
-
-        self.game_controller = GameVC(puzzle, self.view.solverview.gameview)
-
         self.skin = skin
         self.puzzle = puzzle
+
+        board, drawpile = self._generatePuzzleDefineGraphics()
+        hover = grid2graphics(skin, puzzle.hover)
+
+        self.view = EditorView(board, drawpile, hover, parent)
+        self.view.setWindowTitle("New Puzzle (" + puzzle.path + ")")
+
+        self.game_controller = PlayVC(skin, puzzle, self.view.solverview.gameview)
+
         self.bindDefineView()
         self.bindSolverView()
 
         self.view.show()
 
+    def _generatePuzzleDefineGraphics(self):
+        board = grid2graphics(self.skin, self.puzzle.board)
+        drawpile = [grid2graphics(self.skin, move.grid) for move in self.puzzle.moves]
+        return board, drawpile
+
     def bindDefineView(self):
-        model = self.puzzle
+        puzzle = self.puzzle
         view = self.view.defineview
 
-        def updateView(func):
+        def update(func):
             def decorated(*args):
                 func(*args)
-                model.apply_rules(force=True)
-                del view.drawpile[:]
-                view.drawpile.extend(
-                    [PuyoGraphicModel(self.skin, move.grid) for move in model.moves]
-                )
-                view.updateView()
+                puzzle.apply_rules(force=True)
+                view.setGraphics(*self._generatePuzzleDefineGraphics())
 
             return decorated
 
-        @updateView
-        def changeBoardElem(pos):
-            model.board[pos] = model.board[pos].next_()
+        @update
+        def changeGridElem(grid, pos):
+            grid[pos] = grid[pos].next_(cond=lambda p: p is not Puyo.NONE)
 
-        @updateView
-        def changeDrawpileElem(idx_pos):
-            index, pos = idx_pos
-            model.moves[index].grid[pos] = model.moves[index].grid[pos].next_()
+        @update
+        def clearGridElem(grid, pos):
+            grid[pos] = Puyo.NONE
 
-        @updateView
-        def insertDrawpileElem(index=-1):
-            move = model.new_move(index + 1)
+        @update
+        def insertDrawpileElem(index):
+            puzzle.new_move(index + 1)
 
-        @updateView
+        @update
         def deleteDrawpileElem(index):
-            del model.moves[index]
+            del puzzle.moves[index]
 
-        @updateView
+        @update
         def clearBoard():
-            model.board.reset()
+            puzzle.board.reset()
 
-        @updateView
+        @update
         def resetDrawpile():
-            del model.moves[:]
+            puzzle.moves.clear()
 
         def startSolution():
-            if model.apply_rules():
+            if puzzle.apply_rules():
                 self.view.centralWidget().setCurrentWidget(self.view.solverview)
                 self.game_controller.reset()
             else:
@@ -78,13 +78,19 @@ class EditorVC:
                     )
                 )
 
-        view.click_board_puyos.connect(changeBoardElem)
-        view.click_drawpile_puyos.connect(changeDrawpileElem)
-        view.click_drawpile_insert.connect(insertDrawpileElem)
-        view.click_drawpile_delete.connect(deleteDrawpileElem)
-        view.click_reset_drawpile.connect(resetDrawpile)
-        view.click_clear_board.connect(clearBoard)
-        view.click_start.connect(startSolution)
+        view.leftclick_board.connect(lambda pos: changeGridElem(puzzle.board, pos))
+        view.rightclick_board.connect(lambda pos: clearGridElem(puzzle.board, pos))
+        view.leftclick_drawpile.connect(
+            lambda idx, pos: changeGridElem(puzzle.moves[idx].grid, pos)
+        )
+        view.rightclick_drawpile.connect(
+            lambda idx, pos: clearGridElem(puzzle.moves[idx].grid, pos)
+        )
+        view.insert.connect(insertDrawpileElem)
+        view.delete.connect(deleteDrawpileElem)
+        view.reset.connect(resetDrawpile)
+        view.clear.connect(clearBoard)
+        view.start.connect(startSolution)
 
     def bindSolverView(self):
         model = self.puzzle
@@ -93,7 +99,6 @@ class EditorVC:
         def exitSolver():
             self.view.centralWidget().setCurrentWidget(self.view.defineview)
             model.board.revert()
-            view.gameview.board.ghosts = set()
 
         def savePuzzle():
             # check if all moves have been input
@@ -103,5 +108,5 @@ class EditorVC:
                 self.puzzle.save()
                 self.view.close()
 
-        view.click_back.connect(exitSolver)
-        view.click_save.connect(savePuzzle)
+        view.back.connect(exitSolver)
+        view.save.connect(savePuzzle)

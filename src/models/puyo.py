@@ -38,6 +38,12 @@ class EnumCycle(Enum):
         return enum
 
 
+class PopState(EnumCycle):
+    PREPOP = auto()
+    POPEARLY = auto()
+    POPLATER = auto()
+
+
 class Puyo(EnumCycle):
     """A single puyo (order: red, yellow, green, blue, purple, garbage, and none)."""
 

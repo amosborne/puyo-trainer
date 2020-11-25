@@ -17,6 +17,6 @@ def deleteItemOfLayout(layout, index):
     item = layout.takeAt(index)
     widget = item.widget()
     if widget is not None:
-        widget.setParent(None)
+        widget.deleteLater()
     else:
         deleteItemsOfLayout(item.layout())

@@ -12,82 +12,64 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, pyqtSignal
 from viewcontrols.gamepage.puyo import PuyoGridView
 from viewcontrols.gamepage.game import GameView
-
-
-"""
-The module creates UI elements for editing a puyo puzzle definition.
-The view controller is responsible for connecting to click events and
-modifying the displayed information as appropriate.
-"""
+from viewcontrols.qtutils import deleteItemsOfLayout
 
 
 # A view of a single drawpile element, including drawpile control buttons.
-# Specify the graphic model and its index in the drawpile.
 class DrawpileElementView(QHBoxLayout):
-    click_insert = pyqtSignal(int)
-    click_delete = pyqtSignal(int)
-    click_puyos = pyqtSignal(tuple)
+    insert = pyqtSignal(int)
+    delete = pyqtSignal(int)
+    rightclick = pyqtSignal(int, tuple)
+    leftclick = pyqtSignal(int, tuple)
 
-    def __init__(self, graphicmodel, index):
-        super().__init__()
+    def __init__(self, graphics, index, parent=None):
+        super().__init__(parent)
 
-        # Label indicating the position in the drawpile.
-        label = QLabel(str(index + 1))
-        label.setFixedWidth(25)
-        label.setAlignment(Qt.AlignCenter)
-        self.addWidget(label)
+        indexlabel = QLabel(str(index + 1))
+        indexlabel.setFixedWidth(25)
+        indexlabel.setAlignment(Qt.AlignCenter)
 
-        # View of puyos to be drawn.
-        puyos = PuyoGridView(graphicmodel, isframed=True)
-        puyos.clicked.connect(lambda pos: self.click_puyos.emit((index, pos)))
-        self.addWidget(puyos)
-
-        # Delete and insert drawpile element buttons.
-        button_layout = QVBoxLayout()
-        button_layout.setContentsMargins(0, 0, 0, 0)
+        puyos = PuyoGridView(graphics, isframed=True)
+        puyos.rightclick.connect(lambda pos: self.rightclick.emit(index, pos))
+        puyos.leftclick.connect(lambda pos: self.leftclick.emit(index, pos))
 
         delete_button = QPushButton()
         delete_button.setText("Delete")
-        delete_button.clicked.connect(lambda: self.click_delete.emit(index))
+        delete_button.clicked.connect(lambda: self.delete.emit(index))
         delete_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
-        button_layout.addWidget(delete_button)
 
         insert_button = QPushButton()
         insert_button.setText("Insert")
-        insert_button.clicked.connect(lambda: self.click_insert.emit(index))
+        insert_button.clicked.connect(lambda: self.insert.emit(index))
         insert_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
-        button_layout.addWidget(insert_button)
 
+        self.addWidget(indexlabel)
+        self.addWidget(puyos)
+        button_layout = QVBoxLayout()
+        button_layout.setContentsMargins(0, 0, 0, 0)
+        button_layout.addWidget(delete_button)
+        button_layout.addWidget(insert_button)
         self.addLayout(button_layout)
 
 
-# A scrollable list of drawpile elements. Drawpile is a list of graphic models.
-# For convenience, all widgets are destroyed and rebuilt on update.
+# A scrollable list of drawpile elements. Elements are destroyed and rebuilt.
 class DrawpileView(QScrollArea):
-    click_insert = pyqtSignal(int)
-    click_delete = pyqtSignal(int)
-    click_puyos = pyqtSignal(tuple)
+    insert = pyqtSignal(int)
+    delete = pyqtSignal(int)
+    rightclick = pyqtSignal(int, tuple)
+    leftclick = pyqtSignal(int, tuple)
 
-    def __init__(self, drawpile, parent=None):
+    def __init__(self, graphicslist, parent=None):
         super().__init__(parent)
-        self.drawpile = drawpile
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.setWidgetResizable(True)
-        self.updateView()
 
-    def updateView(self):
-        widget = QWidget()
+        widget = QWidget(parent=self)
         layout = QVBoxLayout(widget)
+        self.setWidget(widget)
 
-        for index, graphicmodel in enumerate(self.drawpile):
-            elem = DrawpileElementView(graphicmodel, index)
-            elem.click_insert.connect(self.click_insert.emit)
-            elem.click_delete.connect(self.click_delete.emit)
-            elem.click_puyos.connect(self.click_puyos)
-            layout.addLayout(elem)
-
-        layout.addStretch()
+        self.setGraphics(graphicslist)
 
         self.setMinimumWidth(
             layout.sizeHint().width()
@@ -95,101 +77,121 @@ class DrawpileView(QScrollArea):
             + self.verticalScrollBar().sizeHint().width()
         )
 
-        self.setWidget(widget)
-        self.show()
+    def setGraphics(self, graphicslist):
+        layout = self.widget().layout()
+        deleteItemsOfLayout(layout)
+
+        for index, graphics in enumerate(graphicslist):
+            elem = DrawpileElementView(graphics, index)
+            elem.insert.connect(self.insert)
+            elem.delete.connect(self.delete)
+            elem.rightclick.connect(self.rightclick)
+            elem.leftclick.connect(self.leftclick)
+            layout.addLayout(elem)
+
+        layout.addStretch()
 
 
-# The first of two stacked widgets in the editor, this window defines the puzzle.
-# Board is a single graphic model whereas drawpile is a list.
+# The first of two stacked widgets in the editor - used for puzzle definition.
 class PuzzleDefineView(QWidget):
-    click_drawpile_insert = pyqtSignal(int)
-    click_drawpile_delete = pyqtSignal(int)
-    click_drawpile_puyos = pyqtSignal(tuple)
-    click_board_puyos = pyqtSignal(tuple)
-    click_clear_board = pyqtSignal()
-    click_reset_drawpile = pyqtSignal()
-    click_start = pyqtSignal()
+    insert = pyqtSignal(int)
+    delete = pyqtSignal(int)
+    clear = pyqtSignal()
+    reset = pyqtSignal()
+    start = pyqtSignal()
+    rightclick_drawpile = pyqtSignal(int, tuple)
+    leftclick_drawpile = pyqtSignal(int, tuple)
+    rightclick_board = pyqtSignal(tuple)
+    leftclick_board = pyqtSignal(tuple)
 
-    def __init__(self, board, drawpile, parent=None):
+    def __init__(self, board_graphics, drawpile_graphicslist, parent=None):
         super().__init__(parent)
 
-        drawpile_view = DrawpileView(drawpile)
-        drawpile_view.click_insert.connect(self.click_drawpile_insert)
-        drawpile_view.click_delete.connect(self.click_drawpile_delete)
-        drawpile_view.click_puyos.connect(self.click_drawpile_puyos)
+        drawpile_view = DrawpileView(drawpile_graphicslist)
+        drawpile_view.insert.connect(self.insert)
+        drawpile_view.delete.connect(self.delete)
+        drawpile_view.rightclick.connect(self.rightclick_drawpile)
+        drawpile_view.leftclick.connect(self.leftclick_drawpile)
 
-        board_view = PuyoGridView(board, isframed=True)
-        board_view.clicked.connect(self.click_board_puyos)
-
-        sublayout = QVBoxLayout()
-        sublayout.addWidget(board_view)
+        board_view = PuyoGridView(board_graphics, isframed=True)
+        board_view.rightclick.connect(self.rightclick_board)
+        board_view.leftclick.connect(self.leftclick_board)
 
         clear_button = QPushButton("Clear Board")
         clear_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
-        clear_button.clicked.connect(self.click_clear_board)
-        sublayout.addWidget(clear_button)
+        clear_button.clicked.connect(self.clear)
 
         reset_button = QPushButton("Reset Drawpile")
         reset_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
-        reset_button.clicked.connect(self.click_reset_drawpile)
-        sublayout.addWidget(reset_button)
+        reset_button.clicked.connect(self.reset)
 
         start_button = QPushButton("Start")
         start_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
         start_button.setStyleSheet("background-color: green")
-        start_button.clicked.connect(self.click_start)
-        sublayout.addWidget(start_button)
+        start_button.clicked.connect(self.start)
 
         layout = QHBoxLayout(self)
+        sublayout = QVBoxLayout()
+        sublayout.addWidget(board_view)
+        sublayout.addWidget(clear_button)
+        sublayout.addWidget(reset_button)
+        sublayout.addWidget(start_button)
         layout.addLayout(sublayout)
         layout.addWidget(drawpile_view)
 
-        self.drawpile = drawpile
-        self.drawpile_view = drawpile_view
-        self.board_view = board_view
+        self.drawpile = drawpile_view
+        self.board = board_view
 
-    def updateView(self):
-        self.drawpile_view.updateView()
-        self.board_view.updateView()
+    def setGraphics(self, board_graphics, drawpile_graphicslist):
+        self.board.setGraphics(board_graphics)
+        self.drawpile.setGraphics(drawpile_graphicslist)
 
 
 class PuzzleSolveView(QWidget):
-    click_back = pyqtSignal()
-    click_save = pyqtSignal()
+    back = pyqtSignal()
+    save = pyqtSignal()
 
-    def __init__(self, board, drawpile, hoverarea, parent=None):
+    def __init__(
+        self, board_graphics, drawpile_graphicslist, hover_graphics, parent=None
+    ):
         super().__init__(parent)
 
-        self.gameview = GameView(board, drawpile, hoverarea, draw_index=0)
+        self.gameview = GameView(
+            board_graphics, drawpile_graphicslist, hover_graphics, nremaining=0
+        )
 
         layout = QVBoxLayout(self)
         layout.addWidget(self.gameview)
 
         back_button = QPushButton("Go Back")
         back_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
-        back_button.clicked.connect(self.click_back)
+        back_button.clicked.connect(self.back)
         layout.addWidget(back_button)
 
         save_button = QPushButton("Save and Exit")
         save_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
         save_button.setStyleSheet("background-color: green")
-        save_button.clicked.connect(self.click_save)
+        save_button.clicked.connect(self.save)
         layout.addWidget(save_button)
 
 
 class EditorView(QMainWindow):
-    close_window = pyqtSignal()
+    close = pyqtSignal()
 
-    def __init__(self, board, drawpile, hoverarea, parent=None):
+    def __init__(
+        self, board_graphics, drawpile_graphicslist, hover_graphics, parent=None
+    ):
         super().__init__(parent)
 
-        self.defineview = PuzzleDefineView(board, drawpile)
-        self.solverview = PuzzleSolveView(board, drawpile, hoverarea)
+        self.defineview = PuzzleDefineView(board_graphics, drawpile_graphicslist)
+        self.solverview = PuzzleSolveView(
+            board_graphics, drawpile_graphicslist, hover_graphics
+        )
 
         self.setCentralWidget(QStackedWidget())
         self.centralWidget().addWidget(self.defineview)
         self.centralWidget().addWidget(self.solverview)
 
     def closeEvent(self, event):
-        self.close_window.emit()
+        self.close.emit()
         super().closeEvent(event)

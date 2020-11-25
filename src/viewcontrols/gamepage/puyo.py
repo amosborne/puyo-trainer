@@ -4,27 +4,26 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from functools import partial
 
 
-"""
-This module creates UI elements for viewing puyo graphics on a grid.
-The view controller is responsible for connecting to click events and
-modifying the displayed information as appropriate.
-"""
-
-
-# A view of a single, clickable puyo.
-# Specify the graphic by skin file, pixel rectangle, and opacity.
+# A view of a single, clickable puyo. Displays an image with opacity.
 class PuyoView(QAbstractButton):
+    rightclick = pyqtSignal()
+    leftclick = pyqtSignal()
+
     def __init__(self, image, opacity, parent=None):
         super().__init__(parent)
         self.setGraphic(image, opacity)
 
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.leftclick.emit()
+        if event.button() == Qt.RightButton:
+            self.rightclick.emit()
+
     def setGraphic(self, image, opacity):
         height, width, channel = image.shape
-        bytes_per_line = channel * width
         qimg = QImage(
-            image.tobytes(), width, height, bytes_per_line, QImage.Format_RGBA8888
+            image.tobytes(), width, height, channel * width, QImage.Format_RGBA8888,
         )
-
         self.image = QPixmap(qimg)
         self.opacity = opacity
         self.update()
@@ -39,11 +38,11 @@ class PuyoView(QAbstractButton):
 
 
 # A view of a grid of clickable puyos. May or may not be framed.
-# Specify the graphic model to be interrogated on update.
 class PuyoGridView(QFrame):
-    clicked = pyqtSignal(tuple)
+    rightclick = pyqtSignal(tuple)
+    leftclick = pyqtSignal(tuple)
 
-    def __init__(self, graphicmodel, isframed, parent=None):
+    def __init__(self, graphics, isframed, parent=None):
         super().__init__(parent)
 
         if isframed:
@@ -56,16 +55,15 @@ class PuyoGridView(QFrame):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setOriginCorner(Qt.BottomLeftCorner)
 
+        for gfx in graphics:
+            puyo = PuyoView(gfx.image, gfx.opacity, parent=self)
+            puyo.rightclick.connect(partial(self.rightclick.emit, gfx.pos))
+            puyo.leftclick.connect(partial(self.leftclick.emit, gfx.pos))
+            layout.addWidget(puyo, *gfx.pos)
+
         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
-        for graphic in graphicmodel:
-            puyoview = PuyoView(graphic.image, graphic.opacity)
-            puyoview.clicked.connect(partial(self.clicked.emit, graphic.pos))
-            layout.addWidget(puyoview, *graphic.pos)
-
-        self.graphicmodel = graphicmodel
-
-    def updateView(self):
-        for graphic in self.graphicmodel:
-            puyoview = self.layout().itemAtPosition(*graphic.pos).widget()
-            puyoview.setGraphic(graphic.image, graphic.opacity)
+    def setGraphics(self, graphics):
+        for gfx in graphics:
+            puyo = self.layout().itemAtPosition(*gfx.pos).widget()
+            puyo.setGraphic(gfx.image, gfx.opacity)
