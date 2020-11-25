@@ -11,6 +11,7 @@ class GameView(QWidget):
     pressDown = pyqtSignal()
     pressRight = pyqtSignal()
     pressLeft = pyqtSignal()
+    pressSpace = pyqtSignal()
 
     def __init__(self, board, drawpile, hoverarea, draw_index, parent=None):
         super().__init__(parent)
@@ -69,3 +70,5 @@ class GameView(QWidget):
             self.pressRight.emit()
         elif event.key() == Qt.Key_Left:
             self.pressLeft.emit()
+        elif event.key() == Qt.Key_Space:
+            self.pressSpace.emit()

@@ -12,6 +12,7 @@ class EditorVC:
         hover_graphics = PuyoGraphicModel(skin, puzzle.hover)
 
         self.view = EditorView(board_graphic, move_graphics, hover_graphics, parent)
+        self.view.setWindowTitle("New Puzzle (" + puzzle.path + ")")
 
         self.game_controller = GameVC(puzzle, self.view.solverview.gameview)
 

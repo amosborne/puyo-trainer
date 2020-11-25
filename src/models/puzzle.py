@@ -15,7 +15,7 @@ class Puzzle:
         puzzle.moves = []
         puzzle.hover = HoverGrid.new(module.board_shape, module.move_shape)
         puzzle.module = module
-        puzzle.path = MODULE_DIRECTORY + path
+        puzzle.path = path
 
         puzzle.apply_rules(force=True)
 
@@ -48,7 +48,7 @@ class Puzzle:
         puzzle.moves = [yaml2move(move) for move in safe_data["moves"]]
         puzzle.module = module
         puzzle.hover = HoverGrid.new(module.board_shape, module.move_shape)
-        puzzle.path = MODULE_DIRECTORY + path
+        puzzle.path = path
 
         return puzzle
 
@@ -61,8 +61,8 @@ class Puzzle:
         puzzle_to_save = deepcopy(self)
         puzzle_to_save.board.revert()
 
-        filename = next_puzzle_name(puzzle_to_save.path)
-        filepath = puzzle_to_save.path + "/" + filename
+        filename = next_puzzle_name(MODULE_DIRECTORY + puzzle_to_save.path)
+        filepath = MODULE_DIRECTORY + puzzle_to_save.path + "/" + filename
 
         data = dict()
         data["board"] = grid2list(puzzle_to_save.board)
