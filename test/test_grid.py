@@ -310,3 +310,9 @@ class TestBoardGrid(unittest.TestCase):
         predict = set()
         result = board.pop_set(4)
         self.assertEqual(predict, result)
+
+        result = board.execute_pop(3)
+        predict = BoardGrid.new(shape=(3, 3), nhide=1)
+        predict[0, 0] = Puyo.RED
+        predict[0, 2] = Puyo.GARBAGE
+        self.assertEqual(predict, result)

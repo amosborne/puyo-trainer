@@ -219,8 +219,12 @@ class BoardGrid(AbstractGrid):
 
         return popset
 
-    def execute_pop(self):
-        pass
+    def execute_pop(self, poplimit):
+        popset = self.pop_set(poplimit)
+        for elem in popset:
+            self[elem.pos] = Puyo.NONE
+
+        return self.gravitize()
 
     def apply_move(self, move):
         """Apply the given move to the board and return **self**."""

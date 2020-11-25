@@ -1,5 +1,7 @@
-from models import Direc, Move
+from models import Direc
 from copy import deepcopy
+from PyQt5.QtCore import QTimer
+from constants import POP_SPEED
 
 
 def try_and_update(func):
@@ -46,8 +48,38 @@ class GameVC:
 
     @try_and_update
     def makeMove(self):
+        def animate_pop(popset, popearly):
+            self.view.board.popset = popset
+            self.view.board.popearly = popearly
+            self.view.updateView(self.draw_index)
+
         self.model.board.apply_move(self.model.moves[self.draw_index])
         self.draw_index += 1
+
+        popset = self.model.board.pop_set(self.model.module.pop_limit)
+        animate_pop(popset, popearly=True)
+        return
+
+        while popset:
+            # self.view.updateView(self.draw_index)
+            # print("start animation")
+            # QTimer.singleShot(POP_SPEED * 1000, lambda: animate_pop(popset, True))
+            # QTimer.singleShot(POP_SPEED * 1000, lambda: animate_pop(popset, False))
+            # QTimer.singleShot(POP_SPEED * 1000, lambda: None)
+            # print("stop animation")
+            #     self.view.board.popset = popset
+
+            #     self.view.board.popearly = True
+            #     self.view.updateView(self.draw_index)
+            #     sleep(POP_SPEED)
+
+            #     self.view.board.popearly = False
+            #     self.view.updateView(self.draw_index)
+            #     sleep(POP_SPEED)
+
+            self.model.board.execute_pop(self.model.module.pop_limit)
+            self.view.board.popset = set()
+            popset = self.model.board.pop_set(self.model.module.pop_limit)
 
     @try_and_update
     def revertMove(self):

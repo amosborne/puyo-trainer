@@ -17,3 +17,4 @@ MODULE_DEFAULTS = {
     "color_limit": 4,
     "pop_limit": 4,
 }
+POP_SPEED = 0.5

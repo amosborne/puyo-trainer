@@ -143,8 +143,7 @@ class PuzzleModule:
         self.rules = rules
 
     def _rule_no_pop_groups(self, puzzle, force):
-        # print(puzzle.board.pop_set(self.pop_limit))
-        return True
+        return len(puzzle.board.pop_set(self.pop_limit)) == 0
 
     def _rule_no_floating_puyos(self, puzzle, force):
         board_copy = deepcopy(puzzle.board)

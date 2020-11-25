@@ -248,10 +248,9 @@ class MainView(QMainWindow):
         self.layout.addLayout(puzzle_select_layout)
 
     def _updatePuzzleSelector(self, empty=False):
-        for idx in range(self.puzzle_selector.count()):
-            self.puzzle_selector.removeItem(idx)
-            if empty:
-                return
+        self.puzzle_selector.clear()
+        if empty:
+            return
 
         _, _, filenames = next(os.walk(MODULE_DIRECTORY + self.module()))
         puzzle_files = [
@@ -260,7 +259,7 @@ class MainView(QMainWindow):
             if filename.startswith(PUZZLE_FILE_ROOT)
             and filename.endswith(PUZZLE_FILE_EXT)
         ]
-        for filename in puzzle_files:
+        for filename in sorted(puzzle_files):
             root, _ = os.path.splitext(filename)
             self.puzzle_selector.addItem(root, userData=root)
 
