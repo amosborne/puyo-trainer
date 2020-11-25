@@ -316,3 +316,22 @@ class TestBoardGrid(unittest.TestCase):
         predict[0, 0] = Puyo.RED
         predict[0, 2] = Puyo.GARBAGE
         self.assertEqual(predict, result)
+
+    def test_garbage_pop2(self):
+        board = BoardGrid.new(shape=(12, 6), nhide=1)
+        board[0, 1:4] = Puyo.GREEN
+        board[0, 0] = Puyo.GARBAGE
+        board[0, 4] = Puyo.GARBAGE
+        board[1, 1] = Puyo.GREEN
+        board[1, 2] = Puyo.RED
+
+        predict = {
+            ((0, 0), Puyo.GARBAGE),
+            ((0, 1), Puyo.GREEN),
+            ((0, 2), Puyo.GREEN),
+            ((0, 3), Puyo.GREEN),
+            ((0, 4), Puyo.GARBAGE),
+            ((1, 1), Puyo.GREEN),
+        }
+        result = board.pop_set(4)
+        self.assertEqual(predict, result)

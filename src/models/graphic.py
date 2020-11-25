@@ -20,6 +20,9 @@ class PuyoGraphicModel:
 
     def _iter_puyos(self):
         for elem in self.grid:
+            if elem in self.popset:
+                continue
+
             adj_set = self.grid.adjacent(elem.pos)
             adj_set = {adj for adj in adj_set if adj.puyo is elem.puyo}
 
@@ -62,13 +65,14 @@ class PuyoGraphicModel:
     def _iter_pops(self):
         for elem in self.popset:
             if elem.puyo is Puyo.GARBAGE:
-                return elem2graphic(
+                yield elem2graphic(
                     puyo=Puyo.NONE,
-                    adjmatch=None,
+                    adjmatch=(False, False, False, False),
                     ishidden=False,
                     pos=elem.pos,
                     skin=self.skin,
                 )
+                continue
 
             px_col = SKIN_POPMAP[elem.puyo]
             px_col = px_col + 1 if not self.popearly else px_col

@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QAbstractButton, QFrame, QGridLayout, QSizePolicy
 from PyQt5.QtGui import QPixmap, QPainter, QImage
-from PyQt5.QtCore import QRect, Qt, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal
 from functools import partial
 
 

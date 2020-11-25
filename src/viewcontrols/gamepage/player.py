@@ -6,10 +6,12 @@ from constants import POP_SPEED
 
 def try_and_update(func):
     def wrapper(self):
+        if self.timer.isActive():
+            return
         try:
             func(self)
             self.model.apply_rules(force=True)
-            self._updateView()
+            self._animatePop(True)
         except IndexError:
             pass
 
@@ -27,6 +29,11 @@ class GameVC:
         view.pressLeft.connect(self.shiftLeft)
         view.pressUp.connect(self.revertMove)
         view.pressDown.connect(self.makeMove)
+
+        timer = QTimer(self.view)
+        timer.setSingleShot(True)
+        timer.setInterval(POP_SPEED * 1000)
+        self.timer = timer
 
     @try_and_update
     def rotateRight(self):
@@ -48,38 +55,8 @@ class GameVC:
 
     @try_and_update
     def makeMove(self):
-        def animate_pop(popset, popearly):
-            self.view.board.popset = popset
-            self.view.board.popearly = popearly
-            self.view.updateView(self.draw_index)
-
         self.model.board.apply_move(self.model.moves[self.draw_index])
         self.draw_index += 1
-
-        popset = self.model.board.pop_set(self.model.module.pop_limit)
-        animate_pop(popset, popearly=True)
-        return
-
-        while popset:
-            # self.view.updateView(self.draw_index)
-            # print("start animation")
-            # QTimer.singleShot(POP_SPEED * 1000, lambda: animate_pop(popset, True))
-            # QTimer.singleShot(POP_SPEED * 1000, lambda: animate_pop(popset, False))
-            # QTimer.singleShot(POP_SPEED * 1000, lambda: None)
-            # print("stop animation")
-            #     self.view.board.popset = popset
-
-            #     self.view.board.popearly = True
-            #     self.view.updateView(self.draw_index)
-            #     sleep(POP_SPEED)
-
-            #     self.view.board.popearly = False
-            #     self.view.updateView(self.draw_index)
-            #     sleep(POP_SPEED)
-
-            self.model.board.execute_pop(self.model.module.pop_limit)
-            self.view.board.popset = set()
-            popset = self.model.board.pop_set(self.model.module.pop_limit)
 
     @try_and_update
     def revertMove(self):
@@ -89,9 +66,9 @@ class GameVC:
 
     def reset(self):
         self.draw_index = 0
-        self._updateView()
+        self._animatePop(True)
 
-    def _updateView(self):
+    def _animatePop(self, popearly):
         try:
             move = self.model.moves[self.draw_index]
         except IndexError:
@@ -99,11 +76,34 @@ class GameVC:
 
         self.model.hover.assign_move(move)
 
-        if move is not None:
-            future_board = deepcopy(self.model.board)
-            future_board.apply_move(move)
-            self.view.board.ghosts = future_board - self.model.board
-        else:
-            self.view.board.ghosts = set()
+        self.view.board.ghosts = set()
+        popset = self.view.board.grid.pop_set(self.model.module.pop_limit)
 
-        self.view.updateView(self.draw_index)
+        timer = QTimer(self.view)
+        timer.setSingleShot(True)
+        timer.setInterval(POP_SPEED * 1000)
+        self.timer = timer
+
+        if popset:
+            self.view.board.popset = popset
+            self.view.board.popearly = popearly
+            self.view.updateView(self.draw_index)
+
+            if popearly:
+                self.timer.timeout.connect(lambda: self._animatePop(False))
+            else:
+                self.model.board.execute_pop(self.model.module.pop_limit)
+                self.timer.timeout.connect(lambda: self._animatePop(True))
+
+            self.timer.start()
+
+        else:
+            if move is not None:
+                future_board = deepcopy(self.model.board)
+                future_board.apply_move(move)
+                self.view.board.ghosts = future_board - self.model.board
+            else:
+                self.view.board.ghosts = set()
+
+            self.view.board.popset = set()
+            self.view.updateView(self.draw_index)
