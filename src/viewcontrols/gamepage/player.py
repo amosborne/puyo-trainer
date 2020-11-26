@@ -6,15 +6,26 @@ from viewcontrols.gamepage.game import SoloGameView, TestWindow
 import random
 from viewcontrols.qtutils import ErrorPopup
 
+"""
+In the interest of completing the first working version of this software,
+this file in particular turned into a massive hack.
+
+Not that the order in which signals are connected is CRITICAL because
+signals are executed in order. This is how the test controller can 
+function by splicing multiple subcontrollers together.
+"""
+
 
 def animate(func):
     def wrapper(self):
-        if not self.timer.isActive():
+        if not self.timer.isActive() and not self.lock:
             try:
                 func(self)
                 self.puzzle.apply_rules(force=True)
                 self.animate()
                 self.process_complete.emit()
+                self.lock = self.prelock
+                self.prelock = False
             except IndexError:
                 pass
 
@@ -23,6 +34,8 @@ def animate(func):
 
 class GameVC(QObject):
     process_complete = pyqtSignal()
+    animation_start = pyqtSignal()
+    animation_end = pyqtSignal()
 
     def __init__(self, skin, puzzle, view):
         super().__init__()
@@ -31,6 +44,15 @@ class GameVC(QObject):
         self.view = view
         self.draw_index = 0
         self.animate()
+        self.lock = False
+        self.prelock = False
+        self.haslock = False
+
+    def setLock(self):
+        self.prelock = True
+
+    def releaseLock(self):
+        self.lock = False
 
     def setPuzzle(self, puzzle):
         self.puzzle = puzzle
@@ -51,6 +73,10 @@ class GameVC(QObject):
         # Check for a pop and animate (recursively).
         popset = self.puzzle.board.pop_set(self.puzzle.module.pop_limit)
         if popset:
+            if not self.haslock:
+                self.animation_start.emit()
+                self.haslock = True
+
             # Empty the hover grid.
             self.puzzle.hover.assign_move(None)
             hover_gfx = grid2graphics(self.skin, self.puzzle.hover)
@@ -110,6 +136,8 @@ class GameVC(QObject):
             board_gfx = grid2graphics(self.skin, self.puzzle.board, ghosts)
 
             self.view.setGraphics(board_gfx, draw_gfx, hover_gfx, nremaining)
+            self.animation_end.emit()
+            self.haslock = False
 
 
 class PlayVC(GameVC):
@@ -244,6 +272,13 @@ class TesterVC:
             skin, self.puzzle_response, self.win.review.gameview2, shiftable=False
         )
 
+        self.review_solution_control.animation_start.connect(
+            self.review_response_control.setLock
+        )
+        self.review_solution_control.animation_end.connect(
+            self.review_response_control.releaseLock
+        )
+
         # cross strap hack
         self.win.review.gameview2.setFocusPolicy(Qt.NoFocus)
         self.review_response_control.pressDown_xstrap.connect(
@@ -292,6 +327,8 @@ class TesterVC:
 
     def proceed2test(self):
         if self.review_response_control.timer.isActive():
+            return
+        if self.review_solution_control.timer.isActive():
             return
 
         if self.history:

@@ -147,12 +147,15 @@ class PairedGameView(QWidget):
         right_layout.addWidget(self.label2)
         top_layout.addLayout(right_layout)
 
+        self.setCorrect(True)
+
     def setCorrect(self, iscorrect):
-        print(iscorrect)
         if iscorrect:
-            pass
+            self.label1.setStyleSheet("font: bold 20pt; color: green")
+            self.label2.setStyleSheet("font: bold 20pt; color: green")
         else:
-            pass
+            self.label1.setStyleSheet("font: bold 20pt; color: red")
+            self.label2.setStyleSheet("font: bold 20pt; color: red")
 
 
 class TestGameView(QWidget):
@@ -176,7 +179,8 @@ class TestGameView(QWidget):
         layout = QVBoxLayout(self)
         layout.addWidget(self.gameview)
 
-        label = QLabel("Test (press spacebar to continue)")
+        label = QLabel("Testing")
+        label.setStyleSheet("font: bold 20pt")
         label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         layout.addWidget(label)
 
