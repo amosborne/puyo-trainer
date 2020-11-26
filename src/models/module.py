@@ -134,8 +134,14 @@ class PuzzleModule:
                     p.terminate()
                     return
 
-        print(results)
-        print(MODULE_DIRECTORY + self.puzzles[results[0][1]].path + SELFCOMPAT_FILE)
+        filepath = MODULE_DIRECTORY + self.puzzles[results[0][1]].path + SELFCOMPAT_FILE
+        with open(filepath, "w") as outfile:
+            outfile.write("Pairwise incompatible puzzles:\n")
+            for valid, puz1, puz2 in results:
+                if valid:
+                    continue
+
+                outfile.write(puz1 + ", " + puz2 + "\n")
 
     def _validate_metadata(self):
         assert self.board_shape[0] in MODULE_PARAMETERS["board_shape"][0]
