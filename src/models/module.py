@@ -111,7 +111,7 @@ class PuzzleModule:
             puzzle = Puzzle.load(filename, modulename, module)
             assert puzzle.apply_rules()
 
-            module.puzzles[filename] = puzzle
+            module.puzzles[filename.rstrip(PUZZLE_FILE_EXT)] = puzzle
 
         return module
 

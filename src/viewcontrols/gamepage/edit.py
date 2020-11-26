@@ -157,7 +157,11 @@ class PuzzleSolveView(QWidget):
         super().__init__(parent)
 
         self.gameview = GameView(
-            board_graphics, drawpile_graphicslist, hover_graphics, nremaining=0
+            board_graphics,
+            drawpile_graphicslist,
+            hover_graphics,
+            nremaining=0,
+            parent=self,
         )
 
         layout = QVBoxLayout(self)
@@ -176,7 +180,7 @@ class PuzzleSolveView(QWidget):
 
 
 class EditorView(QMainWindow):
-    close = pyqtSignal()
+    winclose = pyqtSignal()
 
     def __init__(
         self, board_graphics, drawpile_graphicslist, hover_graphics, parent=None
@@ -185,7 +189,7 @@ class EditorView(QMainWindow):
 
         self.defineview = PuzzleDefineView(board_graphics, drawpile_graphicslist)
         self.solverview = PuzzleSolveView(
-            board_graphics, drawpile_graphicslist, hover_graphics
+            board_graphics, drawpile_graphicslist, hover_graphics, parent=self
         )
 
         self.setCentralWidget(QStackedWidget())
@@ -193,5 +197,5 @@ class EditorView(QMainWindow):
         self.centralWidget().addWidget(self.solverview)
 
     def closeEvent(self, event):
-        self.close.emit()
+        self.winclose.emit()
         super().closeEvent(event)

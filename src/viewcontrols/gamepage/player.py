@@ -2,6 +2,7 @@ from models import Direc, PopState, grid2graphics
 from copy import deepcopy
 from PyQt5.QtCore import QTimer
 from constants import POP_SPEED
+from viewcontrols.gamepage.game import SoloGameView
 
 
 def animate(func):
@@ -17,50 +18,13 @@ def animate(func):
     return wrapper
 
 
-class PlayVC:
+class GameVC:
     def __init__(self, skin, puzzle, view):
         self.skin = skin
         self.puzzle = puzzle
         self.view = view
-
-        view.pressX.connect(self.rotateRight)
-        view.pressZ.connect(self.rotateLeft)
-        view.pressRight.connect(self.shiftRight)
-        view.pressLeft.connect(self.shiftLeft)
-        view.pressUp.connect(self.revertMove)
-        view.pressDown.connect(self.makeMove)
-
         self.draw_index = 0
         self.animate()
-
-    @animate
-    def rotateRight(self):
-        move = self.puzzle.moves[self.draw_index]
-        move.direc = Direc.rotate_cw(move.direc)
-
-    @animate
-    def rotateLeft(self):
-        move = self.puzzle.moves[self.draw_index]
-        move.direc = Direc.rotate_ccw(move.direc)
-
-    @animate
-    def shiftRight(self):
-        self.puzzle.moves[self.draw_index].col += 1
-
-    @animate
-    def shiftLeft(self):
-        self.puzzle.moves[self.draw_index].col -= 1
-
-    @animate
-    def makeMove(self):
-        self.puzzle.board.apply_move(self.puzzle.moves[self.draw_index])
-        self.draw_index += 1
-
-    @animate
-    def revertMove(self):
-        if self.draw_index > 0:
-            self.draw_index -= 1
-            self.puzzle.board.revert_move()
 
     def reset(self):
         self.draw_index = 0
@@ -136,3 +100,72 @@ class PlayVC:
             board_gfx = grid2graphics(self.skin, self.puzzle.board, ghosts)
 
             self.view.setGraphics(board_gfx, draw_gfx, hover_gfx, nremaining)
+
+
+class PlayVC(GameVC):
+    def __init__(self, skin, puzzle, view):
+        view.pressX.connect(self.rotateRight)
+        view.pressZ.connect(self.rotateLeft)
+        view.pressRight.connect(self.shiftRight)
+        view.pressLeft.connect(self.shiftLeft)
+        view.pressUp.connect(self.revertMove)
+        view.pressDown.connect(self.makeMove)
+
+        super().__init__(skin, puzzle, view)
+
+    @animate
+    def rotateRight(self):
+        move = self.puzzle.moves[self.draw_index]
+        move.direc = Direc.rotate_cw(move.direc)
+
+    @animate
+    def rotateLeft(self):
+        move = self.puzzle.moves[self.draw_index]
+        move.direc = Direc.rotate_ccw(move.direc)
+
+    @animate
+    def shiftRight(self):
+        self.puzzle.moves[self.draw_index].col += 1
+
+    @animate
+    def shiftLeft(self):
+        self.puzzle.moves[self.draw_index].col -= 1
+
+    @animate
+    def makeMove(self):
+        self.puzzle.board.apply_move(self.puzzle.moves[self.draw_index])
+        self.draw_index += 1
+
+    @animate
+    def revertMove(self):
+        if self.draw_index > 0:
+            self.draw_index -= 1
+            self.puzzle.board.revert_move()
+
+
+class ReviewVC(GameVC):
+    def __init__(self, skin, puzzle, text, parent=None):
+        board = grid2graphics(skin, puzzle.board)
+        drawpile = [grid2graphics(skin, move.grid) for move in puzzle.moves]
+        hover = grid2graphics(skin, puzzle.hover)
+
+        win = SoloGameView(board, drawpile, hover, 0, text, parent)
+        super().__init__(skin, puzzle, win.gameview)
+
+        win.gameview.pressUp.connect(self.revertMove)
+        win.gameview.pressDown.connect(self.makeMove)
+
+        win.show()
+
+        self.win = win
+
+    @animate
+    def makeMove(self):
+        self.puzzle.board.apply_move(self.puzzle.moves[self.draw_index])
+        self.draw_index += 1
+
+    @animate
+    def revertMove(self):
+        if self.draw_index > 0:
+            self.draw_index -= 1
+            self.puzzle.board.revert_move()

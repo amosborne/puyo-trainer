@@ -1,4 +1,11 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel
+from PyQt5.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QMainWindow,
+    QSizePolicy,
+)
 from PyQt5.QtCore import pyqtSignal, Qt
 from viewcontrols.gamepage.puyo import PuyoGridView
 from viewcontrols.qtutils import deleteItemsOfLayout
@@ -23,8 +30,8 @@ class GameView(QWidget):
     ):
         super().__init__(parent)
 
-        self.board = PuyoGridView(board_graphics, isframed=True)
-        self.hover = PuyoGridView(hover_graphics, isframed=True)
+        self.board = PuyoGridView(board_graphics, isframed=True, parent=self)
+        self.hover = PuyoGridView(hover_graphics, isframed=False, parent=self)
         self.drawpile = QVBoxLayout()
 
         leftlayout = QVBoxLayout()
@@ -36,10 +43,11 @@ class GameView(QWidget):
         layout.addLayout(self.drawpile)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        self.setFocusPolicy(Qt.StrongFocus)
         self.setGraphics(
             board_graphics, drawpile_graphicslist, hover_graphics, nremaining
         )
+
+        self.setFocusPolicy(Qt.StrongFocus)
 
     def setGraphics(
         self, board_graphics, drawpile_graphicslist, hover_graphics, nremaining
@@ -49,7 +57,7 @@ class GameView(QWidget):
 
         deleteItemsOfLayout(self.drawpile)
         for drawpile_gfx in drawpile_graphicslist:
-            self.drawpile.addWidget(PuyoGridView(drawpile_gfx, isframed=True))
+            self.drawpile.addWidget(PuyoGridView(drawpile_gfx, isframed=False))
 
         self.drawpile.addStretch()
         self.drawpile.addWidget(QLabel(str(nremaining) + " remaining."))
@@ -69,3 +77,35 @@ class GameView(QWidget):
             self.pressLeft.emit()
         elif event.key() == Qt.Key_Space:
             self.pressSpace.emit()
+
+        super().keyPressEvent(event)
+
+
+class SoloGameView(QMainWindow):
+    def __init__(
+        self,
+        board_graphics,
+        drawpile_graphicslist,
+        hover_graphics,
+        nremaining,
+        text,
+        parent=None,
+    ):
+        super().__init__(parent)
+        self.gameview = GameView(
+            board_graphics,
+            drawpile_graphicslist,
+            hover_graphics,
+            nremaining,
+            parent=parent,
+        )
+
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+        layout.addWidget(self.gameview)
+
+        label = QLabel("Reviewing: " + text)
+        label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        layout.addWidget(label)
+
+        self.setCentralWidget(widget)

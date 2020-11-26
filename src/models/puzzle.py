@@ -74,7 +74,7 @@ class Puzzle:
         with open(filepath, "w") as outfile:
             yaml.dump(data, outfile)
 
-        self.module.puzzles[filename] = puzzle_to_save
+        self.module.puzzles[filename.rstrip(PUZZLE_FILE_EXT)] = puzzle_to_save
 
     def apply_rules(self, force=False):
         return all([rule(self, force) for rule in self.module.rules])

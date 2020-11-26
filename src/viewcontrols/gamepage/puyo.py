@@ -11,6 +11,7 @@ class PuyoView(QAbstractButton):
 
     def __init__(self, image, opacity, parent=None):
         super().__init__(parent)
+        self.setFocusPolicy(Qt.NoFocus)
         self.setGraphic(image, opacity)
 
     def mousePressEvent(self, event):

@@ -15,6 +15,7 @@ import os
 from viewcontrols.qtutils import ErrorPopup, deleteItemOfLayout
 from viewcontrols.mainpage.module import NewModuleDialog, ViewModuleFormLayout
 from viewcontrols.gamepage.editor import EditorVC
+from viewcontrols.gamepage.player import ReviewVC
 from models import PuzzleModule, Puzzle
 from constants import (
     SKIN_DIRECTORY,
@@ -22,6 +23,7 @@ from constants import (
     PUZZLE_FILE_ROOT,
     PUZZLE_FILE_EXT,
 )
+from copy import deepcopy
 
 
 def check_module(func):
@@ -42,6 +44,10 @@ class MainControl:
         view.test_module.connect(self._test_module)
         view.review_puzzle.connect(self._review_puzzle)
         view.new_puzzle.connect(self._new_puzzle)
+
+        # New windows aren't garbage collected.
+        # So don't make thousands of windows?
+        self._garbage_pit = []
 
         self.view = view
         self.view.show()
@@ -85,11 +91,22 @@ class MainControl:
         puzzle = Puzzle.new(self.module, self.view.module())
         editor = EditorVC(puzzle, skin, self.view)
 
-        editor.view.close.connect(self.view._updatePuzzleSelector)
+        # The connection seems to prevent garbage collection also.
+        editor.view.winclose.connect(self.view._updatePuzzleSelector)
 
     @check_module
     def _review_puzzle(self, skin, puzzle):
-        print("REVIEWING PUZZLE (skin: " + skin + ", puzzle: " + puzzle + ")")
+        if not puzzle:
+            ErrorPopup("No puzzle is loaded.")
+
+        puz = self.module.puzzles[puzzle]
+        text = puz.path + "/" + puzzle
+
+        reviewer = ReviewVC(skin, deepcopy(puz), text, self.view)
+        self._garbage_pit.append(reviewer)
+        self._garbage_pit.append(reviewer.win)
+
+        reviewer.win.setWindowTitle("Review Puzzle")
 
 
 class MainView(QMainWindow):
@@ -149,7 +166,10 @@ class MainView(QMainWindow):
             status_bar.addWidget(label)
 
         addLink(link="https://twitter.com/terramyst1", text="by terramyst, ")
-        addLink(link="https://github.com/amosborne/puyo-trainer", text="github")
+        addLink(link="https://github.com/amosborne/puyo-trainer", text="github.")
+
+        status_bar.addWidget(QLabel("(keyboard usage: arrow keys, x, z, spacebar)"))
+
         self.setStatusBar(status_bar)
 
     def _hlineSeparator(self):
