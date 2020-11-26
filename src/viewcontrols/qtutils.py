@@ -1,8 +1,8 @@
 from PyQt5.QtWidgets import QMessageBox
 
 
-def ErrorPopup(msg):
-    error_dialog = QMessageBox()
+def ErrorPopup(msg, parent=None):
+    error_dialog = QMessageBox(parent)
     error_dialog.setText(msg)
     error_dialog.exec_()
 

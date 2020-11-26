@@ -175,7 +175,7 @@ class TestGameView(QWidget):
         layout = QVBoxLayout(self)
         layout.addWidget(self.gameview)
 
-        label = QLabel("Test")
+        label = QLabel("Test (press spacebar to continue)")
         label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         layout.addWidget(label)
 

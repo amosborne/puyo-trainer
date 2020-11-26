@@ -4,6 +4,7 @@ from PyQt5.QtCore import QTimer
 from constants import POP_SPEED
 from viewcontrols.gamepage.game import SoloGameView, TestWindow
 import random
+from viewcontrols.qtutils import ErrorPopup
 
 
 def animate(func):
@@ -104,13 +105,15 @@ class GameVC:
 
 
 class PlayVC(GameVC):
-    def __init__(self, skin, puzzle, view):
+    def __init__(self, skin, puzzle, view, revertable=True):
         view.pressX.connect(self.rotateRight)
         view.pressZ.connect(self.rotateLeft)
         view.pressRight.connect(self.shiftRight)
         view.pressLeft.connect(self.shiftLeft)
         view.pressUp.connect(self.revertMove)
         view.pressDown.connect(self.makeMove)
+
+        self.revertable = revertable
 
         super().__init__(skin, puzzle, view)
 
@@ -139,6 +142,8 @@ class PlayVC(GameVC):
 
     @animate
     def revertMove(self):
+        if not self.revertable:
+            return
         if self.draw_index > 0:
             self.draw_index -= 1
             self.puzzle.board.revert_move()
@@ -179,11 +184,10 @@ class TesterVC:
         self.nmoves = nmoves
         self.nreview = nreview
 
-        self.movecount = 0
-        self.reviewcount = 0
+        self.history = []
 
+        # Initialize the window.
         self.pickPuzzle()
-
         self.win = TestWindow(
             board1=grid2graphics(skin, self.puzzle_response.board),
             drawpile1=[
@@ -200,14 +204,54 @@ class TesterVC:
             parent=parent,
         )
 
+        # Wire up the sub-controllers.
+        self.play_control = PlayVC(
+            skin, self.puzzle_response, self.win.test.gameview, revertable=False
+        )
+
+        self.win.test.gameview.pressSpace.connect(self.proceed2review)
+
         self.win.show()
+
+    def proceed2review(self):
+        # check if there is an ongoing animation
+        if self.play_control.timer.isActive():
+            return
+
+        # check to see if the test is complete
+        if not len(self.puzzle_response.moves) == len(
+            self.puzzle_response.board._boardlist
+        ):
+            ErrorPopup("Finish the test before continuing.")
+            return
+
+        # check to see if it is time to review
+        self.history.append((self.puzzle_response, self.puzzle_solution))
+        if len(self.history) == self.nreview:
+            print("time to review")
+            self.history.clear()
+            self.newTest()
+        else:
+            self.newTest()
+
+    def newTest(self):
+        self.pickPuzzle()
+        self.play_control = PlayVC(
+            self.skin, self.puzzle_response, self.win.test.gameview, revertable=False
+        )
 
     def pickPuzzle(self):
         # pick a random puzzle with a random color map. apply moves as necessary
-        self.puzzle_response = random.choice(list(self.module.puzzles.values()))
+        self.puzzle_response = deepcopy(
+            random.choice(list(self.module.puzzles.values()))
+        )
 
         while len(self.puzzle_response.moves) > self.nmoves:
             self.puzzle_response.board.apply_move(self.puzzle_response.moves.pop(0))
             self.puzzle_response.board._boardlist = []
 
         self.puzzle_solution = deepcopy(self.puzzle_response)
+
+        for move in self.puzzle_response.moves:
+            move.col = 2
+            move.direc = Direc.NORTH
