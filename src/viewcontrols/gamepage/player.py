@@ -1,6 +1,6 @@
 from models import Direc, PopState, grid2graphics
 from copy import deepcopy
-from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import QTimer, Qt, QObject, pyqtSignal
 from constants import POP_SPEED
 from viewcontrols.gamepage.game import SoloGameView, TestWindow
 import random
@@ -20,8 +20,9 @@ def animate(func):
     return wrapper
 
 
-class GameVC:
+class GameVC(QObject):
     def __init__(self, skin, puzzle, view):
+        super().__init__()
         self.skin = skin
         self.puzzle = puzzle
         self.view = view
@@ -105,34 +106,55 @@ class GameVC:
 
 
 class PlayVC(GameVC):
-    def __init__(self, skin, puzzle, view, revertable=True):
+    pressUp_xstrap = pyqtSignal()
+    pressDown_xstrap = pyqtSignal()
+
+    def __init__(self, skin, puzzle, view, revertable=True, shiftable=True):
         view.pressX.connect(self.rotateRight)
         view.pressZ.connect(self.rotateLeft)
         view.pressRight.connect(self.shiftRight)
         view.pressLeft.connect(self.shiftLeft)
+
+        self.revertable = revertable
+        self.shiftable = shiftable
+        super().__init__(skin, puzzle, view)
+
+        view.pressUp.connect(self.xstrap_signal(self.pressUp_xstrap))
+        view.pressDown.connect(self.xstrap_signal(self.pressDown_xstrap))
         view.pressUp.connect(self.revertMove)
         view.pressDown.connect(self.makeMove)
 
-        self.revertable = revertable
+    def xstrap_signal(self, signal):
+        def xstrap():
+            if not self.timer.isActive():
+                signal.emit()
 
-        super().__init__(skin, puzzle, view)
+        return xstrap
 
     @animate
     def rotateRight(self):
+        if not self.shiftable:
+            return
         move = self.puzzle.moves[self.draw_index]
         move.direc = Direc.rotate_cw(move.direc)
 
     @animate
     def rotateLeft(self):
+        if not self.shiftable:
+            return
         move = self.puzzle.moves[self.draw_index]
         move.direc = Direc.rotate_ccw(move.direc)
 
     @animate
     def shiftRight(self):
+        if not self.shiftable:
+            return
         self.puzzle.moves[self.draw_index].col += 1
 
     @animate
     def shiftLeft(self):
+        if not self.shiftable:
+            return
         self.puzzle.moves[self.draw_index].col -= 1
 
     @animate
@@ -222,23 +244,45 @@ class TesterVC:
         if not len(self.puzzle_response.moves) == len(
             self.puzzle_response.board._boardlist
         ):
-            ErrorPopup("Finish the test before continuing.")
+            ErrorPopup("Finish the test before continuing.", parent=self.win)
             return
 
         # check to see if it is time to review
+        self.puzzle_response.board.revert()
         self.history.append((self.puzzle_response, self.puzzle_solution))
+
         if len(self.history) == self.nreview:
-            print("time to review")
-            self.history.clear()
-            self.newTest()
+            self.newReview()
         else:
             self.newTest()
 
     def newTest(self):
+        self.win.centralWidget().setCurrentWidget(self.win.test)
         self.pickPuzzle()
         self.play_control = PlayVC(
             self.skin, self.puzzle_response, self.win.test.gameview, revertable=False
         )
+
+    def spliceReviewControllers(self):
+        puzzle_response, puzzle_solution = self.history.pop(0)
+        self.review_response_control = PlayVC(
+            self.skin, puzzle_response, self.win.review.gameview1, shiftable=False
+        )
+        self.review_solution_control = PlayVC(
+            self.skin, puzzle_solution, self.win.review.gameview2, shiftable=False
+        )
+
+        self.win.review.gameview2.setFocusPolicy(Qt.NoFocus)
+        self.review_response_control.pressDown_xstrap.connect(
+            self.win.review.gameview2.pressDown
+        )
+        self.review_response_control.pressUp_xstrap.connect(
+            self.win.review.gameview2.pressUp
+        )
+
+    def newReview(self):
+        self.spliceReviewControllers()
+        self.win.centralWidget().setCurrentWidget(self.win.review)
 
     def pickPuzzle(self):
         # pick a random puzzle with a random color map. apply moves as necessary
