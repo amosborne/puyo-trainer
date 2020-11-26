@@ -313,11 +313,11 @@ class MainView(QMainWindow):
     def setCompatStatus(self, isactive):
         if isactive:
             self.selfcompat_button.setStyleSheet(
-                "background-color: red; font: bold; color: white"
+                "QPushButton{background-color: red; font: bold; color: white}"
             )
         else:
             self.selfcompat_button.setStyleSheet(
-                "background-color: blue; font: bold; color: white"
+                "QPushButton{background-color: blue; font: bold; color: white}"
             )
 
     def _updatePuzzleSelector(self, empty=False):
