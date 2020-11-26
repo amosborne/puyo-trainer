@@ -96,7 +96,7 @@ class Puzzle:
 
     @staticmethod
     def compatible_over_colors(x):
-        this, other = x
+        this, thisname, other, othername = x
         cmaps = Puyo.color_maps()
         for this_cmap in cmaps:
             this_puzzle = deepcopy(this)
@@ -107,11 +107,47 @@ class Puzzle:
                 that_puzzle.apply_color_map(that_cmap)
 
                 if not this_puzzle.compatible(that_puzzle):
-                    return False
+                    return (False, thisname, othername)
 
-        return True
+        return (True, thisname, othername)
 
     def compatible(self, other):
+        def compare_moves(puz1, puz2, n):
+            try:
+                move1 = puz1.moves[n]
+            except IndexError:
+                return True
+            try:
+                move2 = puz2.moves[n]
+            except IndexError:
+                return True
+
+            return move1.grid == move2.grid
+
+        while True:
+            other_copy = deepcopy(other)
+            while True:
+                if self.board == other_copy.board:
+                    move_match = compare_moves(self, other_copy, 0)
+                    move_match &= compare_moves(self, other_copy, 1)
+                    move_match &= compare_moves(self, other_copy, 2)
+
+                    if move_match:
+                        this_move = self.moves[0]
+                        that_move = other_copy.moves[0]
+                        if not this_move == that_move:
+                            return False
+
+                if len(other_copy.moves) == 1:
+                    break
+                else:
+                    other_copy.board.apply_move(other_copy.moves.pop(0))
+
+            if len(self.moves) == 1:
+                break
+            else:
+                self.board.apply_move(self.moves.pop(0))
+
         return True
 
     def __str__(self):

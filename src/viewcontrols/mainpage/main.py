@@ -24,7 +24,7 @@ from constants import (
     PUZZLE_FILE_EXT,
 )
 from copy import deepcopy
-from threading import Thread
+import threading
 
 
 def check_module(func):
@@ -35,6 +35,19 @@ def check_module(func):
             return func(*args, **kwargs)
 
     return wrapper
+
+
+class CompatThread(threading.Thread):
+    def __init__(self, module, callback):
+        super().__init__()
+        self.killme = threading.Event()
+        self.module = module
+        self.callback = callback
+
+    def run(self):
+        self.module.self_compatible(self)
+        if not self.killme.is_set():
+            self.callback()
 
 
 class MainControl:
@@ -48,7 +61,8 @@ class MainControl:
         view.self_compat.connect(self._run_selfcompat)
         view.setCompatStatus(isactive=False)
 
-        self.selfcompat_thread = Thread(target=lambda: None)
+        self.selfcompat_thread = CompatThread(None, lambda: None)
+        view.closed.connect(lambda: self.selfcompat_thread.killme.set())
 
         # New windows aren't garbage collected.
         # So don't make thousands of windows?
@@ -84,15 +98,15 @@ class MainControl:
         if self.selfcompat_thread.is_alive():
             ErrorPopup("Module self-compatibility check in progress.")
             return
+        elif len(self.module.puzzles.keys()) <= 1:
+            ErrorPopup("Module has less than 2 puzzles.")
+            return
 
         self.view.setCompatStatus(isactive=True)
         module = deepcopy(self.module)
-
-        def execute_self_compat():
-            module.self_compatible()
-            self.view.setCompatStatus(isactive=False)
-
-        self.selfcompat_thread = Thread(target=execute_self_compat)
+        self.selfcompat_thread = CompatThread(
+            module, lambda: self.view.setCompatStatus(isactive=False)
+        )
         self.selfcompat_thread.start()
 
     @check_module
@@ -135,6 +149,7 @@ class MainView(QMainWindow):
     new_puzzle = pyqtSignal(str)
     review_puzzle = pyqtSignal(str, str)
     self_compat = pyqtSignal()
+    closed = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -150,6 +165,10 @@ class MainView(QMainWindow):
         self._createModuleControls()
         self._hlineSeparator()
         self._createSettingSelector()
+
+    def closeEvent(self, event):
+        self.closed.emit()
+        super().closeEvent(event)
 
     def show(self):
         self.select_module.emit(self.module())

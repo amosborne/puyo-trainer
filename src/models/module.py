@@ -4,6 +4,8 @@ from copy import deepcopy
 import os
 import yaml
 import multiprocessing as mp
+from constants import SELFCOMPAT_FILE
+from itertools import combinations
 
 from constants import (
     MODULE_DIRECTORY,
@@ -11,6 +13,7 @@ from constants import (
     METADATA_FILE,
     PUZZLE_FILE_EXT,
     PUZZLE_FILE_ROOT,
+    SELFCOMPAT_FILE,
 )
 
 
@@ -116,17 +119,23 @@ class PuzzleModule:
 
         return module
 
-    def self_compatible(self):
+    def self_compatible(self, thread):
         pool_args = []
-        for name1, puzzle1 in self.puzzles.items():
-            for name2, puzzle2 in self.puzzles.items():
-                if not name1 == name2:
-                    pool_args.append((puzzle1, puzzle2))
+        combos = combinations(self.puzzles.items(), 2)
 
+        for p1, p2 in combos:
+            pool_args.append((p1[1], p1[0], p2[1], p2[0]))
+
+        results = []
         with mp.Pool(int(mp.cpu_count() / 2)) as p:
-            results = p.map(Puzzle.compatible_over_colors, pool_args)
+            for result in p.imap_unordered(Puzzle.compatible_over_colors, pool_args):
+                results.append(result)
+                if thread.killme.is_set():
+                    p.terminate()
+                    return
 
-        return all(results)
+        print(results)
+        print(MODULE_DIRECTORY + self.puzzles[results[0][1]].path + SELFCOMPAT_FILE)
 
     def _validate_metadata(self):
         assert self.board_shape[0] in MODULE_PARAMETERS["board_shape"][0]

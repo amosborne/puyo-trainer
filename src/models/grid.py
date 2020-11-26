@@ -71,6 +71,8 @@ class AbstractGrid:
         return set([elem for elem in self if elem.puyo is not other[elem.pos]])
 
     def __eq__(self, other):
+        if not self.shape == other.shape:
+            return False
         return len(self - other) == 0 and self.nhide == other.nhide
 
     def __ne__(self, other):
@@ -180,6 +182,13 @@ class MoveGrid(AbstractGrid):
             new_board, roff, coff = AbstractGrid._tighten(board)
 
         return AbstractGrid(new_board, nhide=0), roff, coff
+
+    def __eq__(self, other):
+        for direc in Direc:
+            if self.reorient(Direc.NORTH)[0] == other.reorient(direc)[0]:
+                return True
+
+        return False
 
 
 class BoardGrid(AbstractGrid):

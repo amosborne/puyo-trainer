@@ -1,6 +1,7 @@
 SKIN_DIRECTORY = "./ppvs2_skins/"
 MODULE_DIRECTORY = "./modules/"
 METADATA_FILE = "/metadata.yml"
+SELFCOMPAT_FILE = "/selfcompat.txt"
 PUZZLE_FILE_ROOT = "puzzle_"
 PUZZLE_FILE_EXT = ".yml"
 MODULE_PARAMETERS = {
