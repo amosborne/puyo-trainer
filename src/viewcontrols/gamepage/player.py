@@ -29,6 +29,10 @@ class GameVC(QObject):
         self.draw_index = 0
         self.animate()
 
+    def setPuzzle(self, puzzle):
+        self.puzzle = puzzle
+        self.reset()
+
     def reset(self):
         self.draw_index = 0
         self.animate()
@@ -230,8 +234,23 @@ class TesterVC:
         self.play_control = PlayVC(
             skin, self.puzzle_response, self.win.test.gameview, revertable=False
         )
+        self.review_response_control = PlayVC(
+            skin, self.puzzle_response, self.win.review.gameview1, shiftable=False
+        )
+        self.review_solution_control = PlayVC(
+            skin, self.puzzle_response, self.win.review.gameview2, shiftable=False
+        )
 
+        # cross strap hack
+        self.win.review.gameview2.setFocusPolicy(Qt.NoFocus)
+        self.review_response_control.pressDown_xstrap.connect(
+            self.win.review.gameview2.pressDown
+        )
+        self.review_response_control.pressUp_xstrap.connect(
+            self.win.review.gameview2.pressUp
+        )
         self.win.test.gameview.pressSpace.connect(self.proceed2review)
+        self.win.review.gameview1.pressSpace.connect(self.proceed2test)
 
         self.win.show()
 
@@ -259,29 +278,21 @@ class TesterVC:
     def newTest(self):
         self.win.centralWidget().setCurrentWidget(self.win.test)
         self.pickPuzzle()
-        self.play_control = PlayVC(
-            self.skin, self.puzzle_response, self.win.test.gameview, revertable=False
-        )
+        self.play_control.setPuzzle(self.puzzle_response)
 
-    def spliceReviewControllers(self):
-        puzzle_response, puzzle_solution = self.history.pop(0)
-        self.review_response_control = PlayVC(
-            self.skin, puzzle_response, self.win.review.gameview1, shiftable=False
-        )
-        self.review_solution_control = PlayVC(
-            self.skin, puzzle_solution, self.win.review.gameview2, shiftable=False
-        )
+    def proceed2test(self):
+        if self.review_response_control.timer.isActive():
+            return
 
-        self.win.review.gameview2.setFocusPolicy(Qt.NoFocus)
-        self.review_response_control.pressDown_xstrap.connect(
-            self.win.review.gameview2.pressDown
-        )
-        self.review_response_control.pressUp_xstrap.connect(
-            self.win.review.gameview2.pressUp
-        )
+        if self.history:
+            self.newReview()
+        else:
+            self.newTest()
 
     def newReview(self):
-        self.spliceReviewControllers()
+        puzzle_response, puzzle_solution = self.history.pop(0)
+        self.review_solution_control.setPuzzle(puzzle_solution)
+        self.review_response_control.setPuzzle(puzzle_response)
         self.win.centralWidget().setCurrentWidget(self.win.review)
 
     def pickPuzzle(self):
