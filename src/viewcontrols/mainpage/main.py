@@ -80,6 +80,7 @@ class MainControl:
             ErrorPopup("Loaded module has no puzzles.")
 
         tester = TesterVC(skin, deepcopy(self.module), movelen, fbdelay, self.view)
+        tester.win.setWindowTitle("Test (" + self.view.module() + ")")
         self._garbage_pit.append(tester)
         self._garbage_pit.append(tester.win)
 

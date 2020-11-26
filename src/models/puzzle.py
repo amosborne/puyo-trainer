@@ -5,6 +5,7 @@ import os
 import yaml
 from copy import deepcopy
 import numpy as np
+import random
 
 
 class Puzzle:
@@ -83,6 +84,12 @@ class Puzzle:
         new_move = Move(shape=self.module.move_shape, col=2, direc=Direc.NORTH)
         self.moves.insert(index, new_move)
         return new_move
+
+    def randomize_color(self):
+        cmap = random.sample(Puyo.color_maps(), 1)[0]
+        self.board.apply_color_map(cmap)
+        for move in self.moves:
+            move.grid.apply_color_map(cmap)
 
     def __str__(self):
         def sdivider(slen, score):

@@ -1,4 +1,5 @@
 from enum import Enum, auto
+from itertools import permutations
 
 
 class EnumCycle(Enum):
@@ -69,6 +70,18 @@ class Puyo(EnumCycle):
         if self is Puyo.NONE:
             return "  "
         return self.name[0] + self.name[1].lower()
+
+    @staticmethod
+    def color_maps():
+        colors = [puyo for puyo in Puyo if Puyo.is_color(puyo)]
+        cpermute = permutations(colors)
+        cmaps = set()
+        for c1 in cpermute:
+            for c2 in cpermute:
+                cmap = zip(c1, c2)
+                cmaps.add(frozenset(cmap))
+
+        return cmaps
 
 
 class Direc(EnumCycle):

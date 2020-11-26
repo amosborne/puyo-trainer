@@ -101,6 +101,13 @@ class AbstractGrid:
         """Return the set of adjacent elements to the element position."""
         return set([elem for elem in self if Direc.adj_direc(subscript, elem.pos)])
 
+    def apply_color_map(self, cmap):
+        new_board = deepcopy(self._board)
+        for cbefore, cafter in cmap:
+            new_board[self._board == cbefore] = cafter
+
+        self._board = new_board
+
     @staticmethod
     def _tighten(board):
         """

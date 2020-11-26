@@ -39,14 +39,14 @@ class GameVC(QObject):
 
     def __init__(self, skin, puzzle, view):
         super().__init__()
+        self.lock = False
+        self.prelock = False
+        self.haslock = False
         self.skin = skin
         self.puzzle = puzzle
         self.view = view
         self.draw_index = 0
         self.animate()
-        self.lock = False
-        self.prelock = False
-        self.haslock = False
 
     def setLock(self):
         self.prelock = True
@@ -348,6 +348,8 @@ class TesterVC:
         self.puzzle_response = deepcopy(
             random.choice(list(self.module.puzzles.values()))
         )
+
+        self.puzzle_response.randomize_color()
 
         while len(self.puzzle_response.moves) > self.nmoves:
             self.puzzle_response.board.apply_move(self.puzzle_response.moves.pop(0))
