@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import (
     QLabel,
     QMainWindow,
     QSizePolicy,
+    QStackedWidget,
 )
 from PyQt5.QtCore import pyqtSignal, Qt
 from viewcontrols.gamepage.puyo import PuyoGridView
@@ -109,3 +110,104 @@ class SoloGameView(QMainWindow):
         layout.addWidget(label)
 
         self.setCentralWidget(widget)
+
+
+class PairedGameView(QWidget):
+    def __init__(
+        self,
+        board1,
+        drawpile1,
+        hover1,
+        nremain1,
+        board2,
+        drawpile2,
+        hover2,
+        nremain2,
+        parent=None,
+    ):
+        super().__init__(parent)
+
+        self.gameview1 = GameView(board1, drawpile1, hover1, nremain1, parent=self)
+        self.label1 = QLabel("Response")
+        self.gameview2 = GameView(board2, drawpile2, hover2, nremain2, parent=self)
+        self.label2 = QLabel("Solution")
+
+        self.label1.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.label2.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        top_layout = QHBoxLayout(self)
+
+        left_layout = QVBoxLayout()
+        left_layout.addWidget(self.gameview1)
+        left_layout.addWidget(self.label1)
+        top_layout.addLayout(left_layout)
+
+        right_layout = QVBoxLayout()
+        right_layout.addWidget(self.gameview2)
+        right_layout.addWidget(self.label2)
+        top_layout.addLayout(right_layout)
+
+    def setCorrect(iscorrect):
+        if iscorrect:
+            pass
+        else:
+            pass
+
+
+class TestGameView(QWidget):
+    def __init__(
+        self,
+        board_graphics,
+        drawpile_graphicslist,
+        hover_graphics,
+        nremaining,
+        parent=None,
+    ):
+        super().__init__(parent)
+        self.gameview = GameView(
+            board_graphics,
+            drawpile_graphicslist,
+            hover_graphics,
+            nremaining,
+            parent=self,
+        )
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.gameview)
+
+        label = QLabel("Test")
+        label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        layout.addWidget(label)
+
+
+class TestWindow(QMainWindow):
+    def __init__(
+        self,
+        board1,
+        drawpile1,
+        hover1,
+        nremain1,
+        board2,
+        drawpile2,
+        hover2,
+        nremain2,
+        parent=None,
+    ):
+        super().__init__(parent)
+
+        self.review = PairedGameView(
+            board1,
+            drawpile1,
+            hover1,
+            nremain1,
+            board2,
+            drawpile2,
+            hover2,
+            nremain2,
+            parent=self,
+        )
+        self.test = TestGameView(board1, drawpile1, hover1, nremain1, parent=self)
+
+        self.setCentralWidget(QStackedWidget())
+        self.centralWidget().addWidget(self.test)
+        self.centralWidget().addWidget(self.review)

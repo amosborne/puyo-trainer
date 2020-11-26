@@ -15,7 +15,7 @@ import os
 from viewcontrols.qtutils import ErrorPopup, deleteItemOfLayout
 from viewcontrols.mainpage.module import NewModuleDialog, ViewModuleFormLayout
 from viewcontrols.gamepage.editor import EditorVC
-from viewcontrols.gamepage.player import ReviewVC
+from viewcontrols.gamepage.player import ReviewVC, TesterVC
 from models import PuzzleModule, Puzzle
 from constants import (
     SKIN_DIRECTORY,
@@ -76,15 +76,12 @@ class MainControl:
 
     @check_module
     def _test_module(self, skin, movelen, fbdelay):
-        print(
-            "TESTING MODULE (skin: "
-            + skin
-            + ", moves: "
-            + str(movelen)
-            + ", period: "
-            + str(fbdelay)
-            + ")"
-        )
+        if len(self.module.puzzles.keys()) == 0:
+            ErrorPopup("Loaded module has no puzzles.")
+
+        tester = TesterVC(skin, deepcopy(self.module), movelen, fbdelay, self.view)
+        self._garbage_pit.append(tester)
+        self._garbage_pit.append(tester.win)
 
     @check_module
     def _new_puzzle(self, skin):

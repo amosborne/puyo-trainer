@@ -2,7 +2,8 @@ from models import Direc, PopState, grid2graphics
 from copy import deepcopy
 from PyQt5.QtCore import QTimer
 from constants import POP_SPEED
-from viewcontrols.gamepage.game import SoloGameView
+from viewcontrols.gamepage.game import SoloGameView, TestWindow
+import random
 
 
 def animate(func):
@@ -169,3 +170,44 @@ class ReviewVC(GameVC):
         if self.draw_index > 0:
             self.draw_index -= 1
             self.puzzle.board.revert_move()
+
+
+class TesterVC:
+    def __init__(self, skin, module, nmoves, nreview, parent=None):
+        self.skin = skin
+        self.module = module
+        self.nmoves = nmoves
+        self.nreview = nreview
+
+        self.movecount = 0
+        self.reviewcount = 0
+
+        self.pickPuzzle()
+
+        self.win = TestWindow(
+            board1=grid2graphics(skin, self.puzzle_response.board),
+            drawpile1=[
+                grid2graphics(skin, move.grid) for move in self.puzzle_response.moves
+            ],
+            hover1=grid2graphics(skin, self.puzzle_response.hover),
+            nremain1=0,
+            board2=grid2graphics(skin, self.puzzle_solution.board),
+            drawpile2=[
+                grid2graphics(skin, move.grid) for move in self.puzzle_solution.moves
+            ],
+            hover2=grid2graphics(skin, self.puzzle_solution.hover),
+            nremain2=0,
+            parent=parent,
+        )
+
+        self.win.show()
+
+    def pickPuzzle(self):
+        # pick a random puzzle with a random color map. apply moves as necessary
+        self.puzzle_response = random.choice(list(self.module.puzzles.values()))
+
+        while len(self.puzzle_response.moves) > self.nmoves:
+            self.puzzle_response.board.apply_move(self.puzzle_response.moves.pop(0))
+            self.puzzle_response.board._boardlist = []
+
+        self.puzzle_solution = deepcopy(self.puzzle_response)
