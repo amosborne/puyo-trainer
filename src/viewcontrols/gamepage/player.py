@@ -14,6 +14,7 @@ def animate(func):
                 func(self)
                 self.puzzle.apply_rules(force=True)
                 self.animate()
+                self.process_complete.emit()
             except IndexError:
                 pass
 
@@ -21,6 +22,8 @@ def animate(func):
 
 
 class GameVC(QObject):
+    process_complete = pyqtSignal()
+
     def __init__(self, skin, puzzle, view):
         super().__init__()
         self.skin = skin
@@ -252,7 +255,14 @@ class TesterVC:
         self.win.test.gameview.pressSpace.connect(self.proceed2review)
         self.win.review.gameview1.pressSpace.connect(self.proceed2test)
 
+        self.review_response_control.process_complete.connect(self.reviewEval)
+
         self.win.show()
+
+    def reviewEval(self):
+        self.win.review.setCorrect(
+            self.puzzle_response.board == self.puzzle_solution.board
+        )
 
     def proceed2review(self):
         # check if there is an ongoing animation
@@ -290,10 +300,11 @@ class TesterVC:
             self.newTest()
 
     def newReview(self):
-        puzzle_response, puzzle_solution = self.history.pop(0)
-        self.review_solution_control.setPuzzle(puzzle_solution)
-        self.review_response_control.setPuzzle(puzzle_response)
+        self.puzzle_response, self.puzzle_solution = self.history.pop(0)
+        self.review_solution_control.setPuzzle(self.puzzle_solution)
+        self.review_response_control.setPuzzle(self.puzzle_response)
         self.win.centralWidget().setCurrentWidget(self.win.review)
+        self.reviewEval()
 
     def pickPuzzle(self):
         # pick a random puzzle with a random color map. apply moves as necessary

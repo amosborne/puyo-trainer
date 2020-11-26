@@ -147,7 +147,8 @@ class PairedGameView(QWidget):
         right_layout.addWidget(self.label2)
         top_layout.addLayout(right_layout)
 
-    def setCorrect(iscorrect):
+    def setCorrect(self, iscorrect):
+        print(iscorrect)
         if iscorrect:
             pass
         else:
