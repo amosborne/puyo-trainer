@@ -3,6 +3,7 @@ from models.puzzle import Puzzle
 from copy import deepcopy
 import os
 import yaml
+import multiprocessing as mp
 
 from constants import (
     MODULE_DIRECTORY,
@@ -114,6 +115,18 @@ class PuzzleModule:
             module.puzzles[filename.rstrip(PUZZLE_FILE_EXT)] = puzzle
 
         return module
+
+    def self_compatible(self):
+        pool_args = []
+        for name1, puzzle1 in self.puzzles.items():
+            for name2, puzzle2 in self.puzzles.items():
+                if not name1 == name2:
+                    pool_args.append((puzzle1, puzzle2))
+
+        with mp.Pool(int(mp.cpu_count() / 2)) as p:
+            results = p.map(Puzzle.compatible_over_colors, pool_args)
+
+        return all(results)
 
     def _validate_metadata(self):
         assert self.board_shape[0] in MODULE_PARAMETERS["board_shape"][0]

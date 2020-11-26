@@ -24,6 +24,7 @@ from constants import (
     PUZZLE_FILE_EXT,
 )
 from copy import deepcopy
+from threading import Thread
 
 
 def check_module(func):
@@ -44,6 +45,10 @@ class MainControl:
         view.test_module.connect(self._test_module)
         view.review_puzzle.connect(self._review_puzzle)
         view.new_puzzle.connect(self._new_puzzle)
+        view.self_compat.connect(self._run_selfcompat)
+        view.setCompatStatus(isactive=False)
+
+        self.selfcompat_thread = Thread(target=lambda: None)
 
         # New windows aren't garbage collected.
         # So don't make thousands of windows?
@@ -73,6 +78,22 @@ class MainControl:
             self.view.addModuleSelector(dialog.module_kwargs["modulename"])
 
         dialog.accepted.connect(create_module)
+
+    @check_module
+    def _run_selfcompat(self):
+        if self.selfcompat_thread.is_alive():
+            ErrorPopup("Module self-compatibility check in progress.")
+            return
+
+        self.view.setCompatStatus(isactive=True)
+        module = deepcopy(self.module)
+
+        def execute_self_compat():
+            module.self_compatible()
+            self.view.setCompatStatus(isactive=False)
+
+        self.selfcompat_thread = Thread(target=execute_self_compat)
+        self.selfcompat_thread.start()
 
     @check_module
     def _test_module(self, skin, movelen, fbdelay):
@@ -113,6 +134,7 @@ class MainView(QMainWindow):
     test_module = pyqtSignal(str, int, int)
     new_puzzle = pyqtSignal(str)
     review_puzzle = pyqtSignal(str, str)
+    self_compat = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -258,12 +280,26 @@ class MainView(QMainWindow):
 
         self._updatePuzzleSelector()
 
+        self.selfcompat_button = QPushButton("Self-Compat")
+        self.selfcompat_button.clicked.connect(self.self_compat)
+
         puzzle_select_layout = QHBoxLayout()
         puzzle_select_layout.addWidget(modlabel)
         puzzle_select_layout.addWidget(modcombo)
         puzzle_select_layout.addWidget(puzlabel)
         puzzle_select_layout.addWidget(puzcombo)
+        puzzle_select_layout.addWidget(self.selfcompat_button)
         self.layout.addLayout(puzzle_select_layout)
+
+    def setCompatStatus(self, isactive):
+        if isactive:
+            self.selfcompat_button.setStyleSheet(
+                "background-color: red; font: bold; color: white"
+            )
+        else:
+            self.selfcompat_button.setStyleSheet(
+                "background-color: blue; font: bold; color: white"
+            )
 
     def _updatePuzzleSelector(self, empty=False):
         self.puzzle_selector.clear()

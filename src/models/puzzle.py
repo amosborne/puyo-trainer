@@ -87,9 +87,32 @@ class Puzzle:
 
     def randomize_color(self):
         cmap = random.sample(Puyo.color_maps(), 1)[0]
+        self.apply_color_map(cmap)
+
+    def apply_color_map(self, cmap):
         self.board.apply_color_map(cmap)
         for move in self.moves:
             move.grid.apply_color_map(cmap)
+
+    @staticmethod
+    def compatible_over_colors(x):
+        this, other = x
+        cmaps = Puyo.color_maps()
+        for this_cmap in cmaps:
+            this_puzzle = deepcopy(this)
+            this_puzzle.apply_color_map(this_cmap)
+
+            for that_cmap in cmaps:
+                that_puzzle = deepcopy(other)
+                that_puzzle.apply_color_map(that_cmap)
+
+                if not this_puzzle.compatible(that_puzzle):
+                    return False
+
+        return True
+
+    def compatible(self, other):
+        return True
 
     def __str__(self):
         def sdivider(slen, score):
