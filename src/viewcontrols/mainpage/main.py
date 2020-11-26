@@ -113,6 +113,10 @@ class MainControl:
     def _test_module(self, skin, movelen, fbdelay):
         if len(self.module.puzzles.keys()) == 0:
             ErrorPopup("Loaded module has no puzzles.")
+            return
+        if not skin:
+            ErrorPopup("No skin is loaded.")
+            return
 
         tester = TesterVC(skin, deepcopy(self.module), movelen, fbdelay, self.view)
         tester.win.setWindowTitle("Test (" + self.view.module() + ")")
@@ -121,6 +125,10 @@ class MainControl:
 
     @check_module
     def _new_puzzle(self, skin):
+        if not skin:
+            ErrorPopup("No skin is loaded.")
+            return
+
         puzzle = Puzzle.new(self.module, self.view.module())
         editor = EditorVC(puzzle, skin, self.view)
 
@@ -131,6 +139,10 @@ class MainControl:
     def _review_puzzle(self, skin, puzzle):
         if not puzzle:
             ErrorPopup("No puzzle is loaded.")
+            return
+        if not skin:
+            ErrorPopup("No skin is loaded.")
+            return
 
         puz = self.module.puzzles[puzzle]
         text = puz.path + "/" + puzzle
@@ -312,13 +324,9 @@ class MainView(QMainWindow):
 
     def setCompatStatus(self, isactive):
         if isactive:
-            self.selfcompat_button.setStyleSheet(
-                "QPushButton{background-color: red; font: bold; color: white}"
-            )
+            self.selfcompat_button.setStyleSheet("font: bold; color: red")
         else:
-            self.selfcompat_button.setStyleSheet(
-                "QPushButton{background-color: blue; font: bold; color: white}"
-            )
+            self.selfcompat_button.setStyleSheet("font: bold; color: blue")
 
     def _updatePuzzleSelector(self, empty=False):
         self.puzzle_selector.clear()

@@ -127,7 +127,7 @@ class PuzzleDefineView(QWidget):
 
         start_button = QPushButton("Start")
         start_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
-        start_button.setStyleSheet("background-color: green")
+        start_button.setStyleSheet("font: bold; color: green")
         start_button.clicked.connect(self.start)
 
         layout = QHBoxLayout(self)
@@ -174,7 +174,7 @@ class PuzzleSolveView(QWidget):
 
         save_button = QPushButton("Save and Exit")
         save_button.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
-        save_button.setStyleSheet("background-color: green")
+        save_button.setStyleSheet("font: bold; color: green")
         save_button.clicked.connect(self.save)
         layout.addWidget(save_button)
 
