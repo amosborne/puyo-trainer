@@ -269,7 +269,7 @@ class MainView(QMainWindow):
 
     def _updatePuzzleSelector(self, empty=False):
         self.puzzle_selector.clear()
-        if empty:
+        if empty or self.module() is None:
             return
 
         _, _, filenames = next(os.walk(MODULE_DIRECTORY + self.module()))
