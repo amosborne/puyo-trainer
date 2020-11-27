@@ -5,7 +5,7 @@
 
 # I'd prefer to see it in video format:
 
-Coming soon!
+https://www.youtube.com/watch?v=rWmMWvFeG8M
 
 # OK, I'll read the (short) manual:
 
